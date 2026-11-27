@@ -232,12 +232,14 @@ A partial pass is useful evidence. Do not label it a full pass.
 | Filesystem scope | PASS | `allowedDirectories` points to `/home/xubuntu/AgChat-Testing/test-a01`. |
 | Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
 | File create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back. |
-| Git status/diff | PENDING | Check existing workspace; initialise only if needed. |
-| Harmless command execution | PENDING | Run a simple non-destructive command via Desktop Commander. |
+| Git status/diff | BLOCKED — Git CLI absent | `git: command not found`; Git package available in Ubuntu 26.04 repositories. Install Git, then initialise only in the test workspace. |
+| Harmless command execution | PENDING | Desktop Commander can execute host commands; next run after Git setup. |
 | Same-chat sequential calls | PENDING | Continue several tool calls in this same conversation. |
 | Failure/retry/duplicate behaviour | PENDING | Test a safe failure and verify no duplicate write. |
 
-**Immediate next step:** Run `git status --short` and `git diff --` in `/home/xubuntu/AgChat-Testing/test-a01/workspace`. If the directory is not yet a Git repository, initialise it there and make a baseline commit only if Git identity is configured. Then run a harmless command such as `printf 'AgChat TEST A OK\\n'` and capture the returned result. Do not reinstall Desktop Commander or recreate the workspace.
+**Latest environment check:** Xubuntu reports Ubuntu 26.04 LTS (Resolute); Git is not installed (`git: command not found`). `apt`/`apt-get` are available and the repository candidate is Git 2.53.0. The current Live session has a 5.8 GB writable overlay with about 3.5 GB free. The workspace contains only the synthetic `hello-agchat.md` fixture and is not yet a Git repository.
+
+**Immediate next step:** Install Git in this Live session (administrator authentication may be required), then initialise Git in `/home/xubuntu/AgChat-Testing/test-a01/workspace`, create a baseline commit if identity is configured, and proceed with Git status/diff. Do not reinstall Desktop Commander or recreate the workspace.
 
 ## 14. What happens after TEST A
 
