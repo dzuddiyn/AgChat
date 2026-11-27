@@ -232,14 +232,14 @@ A partial pass is useful evidence. Do not label it a full pass.
 | Filesystem scope | PASS | `allowedDirectories` points to `/home/xubuntu/AgChat-Testing/test-a01`. |
 | Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
 | File create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back. |
-| Git status/diff | BLOCKED — Git CLI absent | `git: command not found`; Git package available in Ubuntu 26.04 repositories. Install Git, then initialise only in the test workspace. |
-| Harmless command execution | PENDING | Desktop Commander can execute host commands; next run after Git setup. |
+| Git status/diff | PASS | Git 2.53.0 installed; repository initialised in test workspace; staged diff inspected; baseline commit `e7b3fd2`; final status clean. |
+| Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
 | Same-chat sequential calls | PENDING | Continue several tool calls in this same conversation. |
 | Failure/retry/duplicate behaviour | PENDING | Test a safe failure and verify no duplicate write. |
 
-**Latest environment check:** Xubuntu reports Ubuntu 26.04 LTS (Resolute); Git is not installed (`git: command not found`). `apt`/`apt-get` are available and the repository candidate is Git 2.53.0. The current Live session has a 5.8 GB writable overlay with about 3.5 GB free. The workspace contains only the synthetic `hello-agchat.md` fixture and is not yet a Git repository.
+**Latest results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
 
-**Immediate next step:** Install Git in this Live session (administrator authentication may be required), then initialise Git in `/home/xubuntu/AgChat-Testing/test-a01/workspace`, create a baseline commit if identity is configured, and proceed with Git status/diff. Do not reinstall Desktop Commander or recreate the workspace.
+**Next:** Continue TEST A with multiple sequential tool calls in this same conversation, then a controlled failure/retry test and duplicate-execution check. Do not reinstall Desktop Commander or recreate the workspace. Git installation and repository state are temporary because the current Xubuntu session is a non-persistent Live USB.
 
 ## 14. What happens after TEST A
 
