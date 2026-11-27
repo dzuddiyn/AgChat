@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** Planned — not yet executed  
+**Status:** In progress — MCP connection and basic filesystem operations verified; Git and command workflow pending  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -14,7 +14,7 @@ Prove that ChatGPT Go, from the same conversation, can:
 - Discover local MCP tools through MCP SuperAssistant.
 - Read, create, and edit files in a scoped local workspace.
 - Verify changes through Git.
-- Run one harmless command/test inside a real constrained execution boundary.
+- Run a harmless development command/test through the connected local tool path.
 - Receive stdout, stderr and exit code.
 - Continue with sequential tool calls without duplicate execution or loss of conversation continuity.
 
@@ -30,20 +30,19 @@ Use one MCP transport for the first attempt:
 
 Confirm the actual endpoint from the installed version's configuration. Do not assume both are active.
 
-## 3. Safety rules
+## 3. Practical operating rules
 
-1. Use synthetic files, not production source code or personal documents.
-2. Keep the test workspace separate from the home directory's important files.
-3. Begin with read-only tools.
-4. Limit filesystem access to the test workspace.
-5. Do not assume a filesystem allow-list confines terminal commands.
-6. Do not enable unrestricted shell execution on the host.
-7. Manual approval is not a sandbox.
-8. Before running commands, establish a constrained container or equivalent execution boundary.
-9. Do not use privileged containers, broad home mounts, or host Docker socket access.
-10. Redact tokens, passwords, and private URLs from logs and evidence.
-11. Do not run sudo, partition, format, reinstall, or bootloader commands as part of this test.
-12. If using a non-persistent Live USB, treat changes to installed packages/configuration as temporary and potentially lost on reboot.
+This is a PoC on a PC dedicated to development. The priority is to get a working workflow into use, not to build a production security environment.
+
+1. Use the existing Xubuntu session and connected tools; do not repeat successful setup.
+2. Use the existing synthetic workspace for the initial checks.
+3. Filesystem allow-listing is useful, but it does not confine terminal commands.
+4. Ordinary, understood, non-destructive host commands are acceptable for this PoC; a container/VM is not a prerequisite.
+5. Avoid destructive disk/system operations (formatting, partitioning, bootloader changes, broad deletion) and do not expose credentials or important personal/production data.
+6. Inspect Git status/diff after file-changing operations.
+7. Keep tokens, passwords, and private credentials out of logs and evidence.
+8. If this remains a non-persistent Live USB, remember that installed packages/configuration may be lost on reboot.
+9. Add stronger isolation only if a concrete risk or later workload justifies it.
 
 ## 4. Phase 0 — Xubuntu readiness inventory
 
@@ -75,6 +74,10 @@ Record:
 
 ## 5. Phase 1 — Disposable workspace
 
+**Current result: PARTIAL PASS.** The workspace already exists at `/home/xubuntu/AgChat-Testing/test-a01/` with `workspace/`, `evidence/`, `notes/`, and `backups/`. Desktop Commander `allowedDirectories` has been set to this test directory and read back successfully. A synthetic `hello-agchat.md` was created, read, appended, and read back; all these file operations passed.
+
+Do not recreate this workspace or repeat these successful file operations.
+
 Proposed layout:
 
 ```text
@@ -86,10 +89,10 @@ Proposed layout:
 ```
 
 Inside `workspace/`:
-- Initialise Git.
-- Create a baseline commit.
-- Add a small synthetic fixture such as `hello.txt` with a known value.
-- Record the initial Git status.
+- Check whether Git is already initialised; do not overwrite existing repository metadata.
+- If not initialised, initialise Git in this disposable workspace and create a baseline commit if Git identity is already configured.
+- Keep the existing synthetic `hello-agchat.md` as the fixture.
+- Record Git status and diff.
 
 Do not place secrets or real user data in this workspace.
 
@@ -134,13 +137,11 @@ Do not deliberately write outside the workspace to test the boundary. A denied r
 
 **Exit condition:** File operations work, changes are verifiable, and workspace scoping is demonstrated.
 
-## 9. Phase 5 — Controlled command/test
+## 9. Phase 5 — Practical command/test
 
-This phase is blocked until a real command-execution boundary is selected and configured.
+No container or VM is required for this PoC. Use the connected Desktop Commander command tool on the dedicated development PC for ordinary, non-destructive development commands.
 
-Recommended direction: a non-privileged container with only the disposable workspace mounted. Avoid privileged mode, host socket mounts, and broad host directory mounts.
-
-Run only a harmless test, for example printing a known marker or running a tiny local fixture test.
+Start with a harmless check such as printing a marker, checking the Git version/status, or running a tiny local fixture test. Do not run destructive disk/system commands or broad deletion.
 
 Capture:
 - Command identifier/action.
@@ -152,7 +153,7 @@ Capture:
 
 Also test one expected failure, such as a harmless invalid test target, to confirm non-zero exit codes and error output are returned honestly.
 
-**Exit condition:** Command executes only inside the constrained environment and its complete result returns to the original chat.
+**Exit condition:** A harmless command completes through the connected tool path and its result (stdout, stderr, exit code where exposed) returns to the original chat.
 
 ## 10. Phase 6 — Same-chat continuity and failure behaviour
 
@@ -218,11 +219,27 @@ Do not include authentication tokens or secrets.
 
 **PARTIAL** if filesystem operations work but command execution or same-chat continuity remains unproven.
 
-**FAIL** if the bridge cannot return tool results reliably, executes duplicate writes/commands, or cannot maintain a safe workspace boundary.
+**FAIL** if the bridge cannot return tool results reliably, executes duplicate writes/commands, or causes unintended destructive changes. Do not fail the PoC merely because no container/VM is present.
 
 A partial pass is useful evidence. Do not label it a full pass.
 
-## 13. What happens after TEST A
+## 13. Current progress and immediate next actions
+
+| Item | Status | Evidence / next action |
+|---|---|---|
+| RDC connection | PASS | Device `xubuntu` is online. |
+| Desktop Commander MCP connection | PASS | Tool calls succeeded. |
+| Filesystem scope | PASS | `allowedDirectories` points to `/home/xubuntu/AgChat-Testing/test-a01`. |
+| Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
+| File create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back. |
+| Git status/diff | PENDING | Check existing workspace; initialise only if needed. |
+| Harmless command execution | PENDING | Run a simple non-destructive command via Desktop Commander. |
+| Same-chat sequential calls | PENDING | Continue several tool calls in this same conversation. |
+| Failure/retry/duplicate behaviour | PENDING | Test a safe failure and verify no duplicate write. |
+
+**Immediate next step:** Run `git status --short` and `git diff --` in `/home/xubuntu/AgChat-Testing/test-a01/workspace`. If the directory is not yet a Git repository, initialise it there and make a baseline commit only if Git identity is configured. Then run a harmless command such as `printf 'AgChat TEST A OK\\n'` and capture the returned result. Do not reinstall Desktop Commander or recreate the workspace.
+
+## 14. What happens after TEST A
 
 Only after the evidence is reviewed:
 1. Identify the actual gaps.
