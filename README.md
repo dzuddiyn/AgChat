@@ -33,7 +33,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 ## Status
 
 - Research and architecture direction: documented from the available project discussions and prior decisions.
-- TEST A: **in progress — RDC/MCP, filesystem, Git workflow, and harmless host command execution verified; same-chat sequence and failure/retry behaviour remain**.
+- TEST A: **Session 1 — Disposable workspace: PASS.** Local RDC coding loop, controlled failure/recovery, automated tests, and Git review were completed. **Session 2 — MCP SuperAssistant extension and proxy: PENDING**, to resume after Xubuntu is installed on the SSD and the basic environment is configured.
 - ChatCMD / CoS: **deferred pending TEST A evidence**.
 - Permanent Xubuntu installation or SSD formatting: **not authorised by this documentation**; wait for an explicit user decision.
 
