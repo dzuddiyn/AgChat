@@ -4,7 +4,7 @@
 **Baseline date:** 27 November 2026  
 **Repository:** https://github.com/dzuddiyn/AgChat  
 **Purpose:** Preserve the research, reasoning, accepted decisions, constraints, and implementation plan discussed for AgChat.  
-**Important:** This document distinguishes decisions from verified test results. TEST A has not yet been executed or passed.
+**Important:** This document distinguishes decisions from verified test results. TEST A is in progress; connection and basic filesystem operations have passed, while Git verification and end-to-end command workflow remain pending.
 
 ---
 
@@ -101,16 +101,18 @@ Use the native feature of the chosen product where it is available and suitable.
 
 The bridge is an integration experiment, not a way to bypass provider usage limits, account entitlements, safety policies, or product restrictions. Do not distribute one task across multiple chats or agents to evade those controls.
 
-### 4.4 Security before convenience
+### 4.4 PoC first, practical security (accepted standing principle)
 
-- Start with read-only access.
-- Scope filesystem access to a disposable workspace.
-- Keep command execution disabled until a real execution boundary is in place.
-- Require explicit approval for consequential writes and commands.
-- Keep secrets and personal data out of test fixtures and evidence.
-- Preserve a Git baseline and inspect diffs after changes.
+The development PC is dedicated to development and experimentation. The project must not become blocked or unnecessarily complicated by production-grade security requirements that do not materially improve this PoC.
 
-A manual approval prompt is a human-control mechanism, **not a sandbox**.
+- Prioritise a working, usable end-to-end PoC.
+- Use the simplest existing tool path that proves the workflow; do not require a container or VM merely to satisfy a formal checklist.
+- Host-level command execution on the dedicated development PC is acceptable for the PoC when the action is understood and reasonably safe.
+- Keep proportionate safeguards: avoid destructive disk/system commands, protect credentials and important personal/production data, and inspect Git status/diffs.
+- Keep synthetic/disposable test data where convenient, but do not add elaborate isolation or approval layers without a concrete risk.
+- Introduce stronger isolation later if real usage, a specific workload, or a demonstrated risk warrants it.
+
+Security remains important, but it is an enabler of practical development rather than a reason to prevent the PoC from working.
 
 ## 5. Existing Agent360 capability audit
 
@@ -199,7 +201,7 @@ Xubuntu was being tested from a normal Live USB without persistence. Therefore, 
 
 ### 6.5 V1 deployment decision
 
-Start with the simplest host-side integration for read-only and filesystem proof. Introduce a constrained container before enabling commands that could affect the host. Do not make VM deployment a V1 prerequisite.
+Start with the simplest host-side integration and prove the workflow directly on the development PC. Host-only command execution is acceptable for this PoC; use ordinary care around destructive commands and important data. A container may be added later if it provides a concrete benefit, but it is not a prerequisite. VM deployment is not required for V1.
 
 ## 7. Current candidate integration: TEST A
 
@@ -240,7 +242,7 @@ Important distinction:
 - Terminal/process execution: may run with the operating-system user's permissions and is not automatically confined by the filesystem allow-list.
 - Manual approval: allows the user to accept or reject an action but does not technically isolate the process.
 
-Therefore, begin with read-only tools and file operations. For command/test execution, use a genuinely constrained container or a separate, deliberately isolated environment. Do not expose unrestricted shell access on the host.
+Use filesystem scoping where it is already available, but do not mistake it for command isolation. For this dedicated development-PC PoC, proceed with host command execution for ordinary, non-destructive development tasks. Avoid destructive system/disk operations and protect important data. A container is optional, not a gate.
 
 ### 7.5 TEST A acceptance criteria
 
@@ -505,8 +507,9 @@ Do not add these to the current build unless a new requirement is approved:
 | D-011 | Container is a possible command-execution boundary; VM is not required for V1. | Accepted |
 | D-012 | Do not attribute i7-4710HQ laptop specifications to Niniy-PC. | Constraint |
 | D-013 | Do not treat Live USB without persistence as a permanent installation. | Constraint |
-| D-014 | Manual approval alone is not a sandbox. | Security constraint |
-| D-015 | Do not bypass provider limits, entitlements, or safety policies through multi-chat/multi-agent routing. | Constraint |
+| D-014 | Apply practical, risk-proportionate security; do not block the PoC with unnecessary isolation layers. | Accepted standing principle |
+| D-015 | The dedicated development PC may run ordinary host-level PoC commands; avoid destructive operations and protect important data. | Accepted |
+| D-016 | Do not bypass provider limits, entitlements, or safety policies through multi-chat/multi-agent routing. | Constraint |
 
 ## 14. Open questions (not blockers for the first read-only proof)
 
@@ -528,4 +531,6 @@ When new evidence appears:
 4. Explain what evidence justifies changing an accepted decision.
 5. Keep historical decisions rather than silently rewriting the project history.
 
-**Next action:** Complete Xubuntu environment inventory, then execute TEST A in the order defined in [TEST-A-PLAN.md](TEST-A-PLAN.md). No ChatCMD/CoS installation before the TEST A gate is passed.
+**Current TEST A evidence (27 November 2026):** RDC connection is online; Desktop Commander MCP is connected; `allowedDirectories` is set to `/home/xubuntu/AgChat-Testing/test-a01`; workspace folders `workspace/`, `evidence/`, `notes/`, and `backups/` exist; a synthetic `hello-agchat.md` was created, read, appended, and read back successfully. Git status/diff, command execution, sequential same-chat calls, and failure/retry behaviour remain pending.
+
+**Next action:** Run Git status/diff in the existing synthetic workspace, then test a harmless development command through the already-connected Desktop Commander path. Do not reinstall or repeat the successful setup. ChatCMD/CoS remain deferred until the practical PoC has enough evidence.
