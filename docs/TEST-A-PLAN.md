@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** In progress — MCP connection and basic filesystem operations verified; Git and command workflow pending  
+**Status:** Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant extension and proxy: PENDING (resume after permanent Xubuntu installation and basic setup).  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -74,7 +74,7 @@ Record:
 
 ## 5. Phase 1 — Disposable workspace
 
-**Current result: PARTIAL PASS.** The workspace already exists at `/home/xubuntu/AgChat-Testing/test-a01/` with `workspace/`, `evidence/`, `notes/`, and `backups/`. Desktop Commander `allowedDirectories` has been set to this test directory and read back successfully. A synthetic `hello-agchat.md` was created, read, appended, and read back; all these file operations passed.
+**Current result: PASS — Session 1 completed.** The disposable workspace was created at `/home/xubuntu/AgChat-Testing/test-a01/` with `workspace/`, `evidence/`, `notes/`, and `backups/`. Desktop Commander `allowedDirectories` was set to this test directory and read back successfully. A synthetic `hello-agchat.md` fixture was created, read, appended, and read back. Git baseline commit `e7b3fd2` was created. A Python monthly-budget calculator (`budget.py`) and 8 unit tests were added; all 8 tests passed. A controlled defect (addition instead of subtraction) was injected, detected by the tests, repaired, and verified with all 8 tests passing again. The correct output returned RM2,250. Git staging and diff checks passed. This validates the **local RDC/Desktop Commander coding loop and failure-recovery subtest**. It does not validate the MCP SuperAssistant browser-extension/proxy bridge.
 
 Do not recreate this workspace or repeat these successful file operations.
 
@@ -239,7 +239,7 @@ A partial pass is useful evidence. Do not label it a full pass.
 
 **Latest results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
 
-**Next:** Continue TEST A with multiple sequential tool calls in this same conversation, then a controlled failure/retry test and duplicate-execution check. Do not reinstall Desktop Commander or recreate the workspace. Git installation and repository state are temporary because the current Xubuntu session is a non-persistent Live USB.
+**Next:** Stop work on the temporary Live USB. Back up Windows data, install Xubuntu to the SSD, and complete the basic environment setup. Then resume with **Session 2 — MCP SuperAssistant extension and proxy**. Do not repeat Session 1; its disposable-workspace coding-loop subtests are recorded as PASS. The browser-extension → local proxy → Desktop Commander end-to-end bridge remains unverified.
 
 ## 14. What happens after TEST A
 
