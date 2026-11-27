@@ -2,7 +2,7 @@
 
 **AgChat** is the project space and Source of Truth (SoT) for research, architecture decisions, validation plans, and implementation notes concerning agentic coding through an AI chat interface.
 
-The operating principle is **reuse before rebuild**: use the native capabilities of existing products and open-source tools wherever they meet the requirements. Do not create a custom orchestration/runtime layer unless a validated gap requires it.
+The operating principles are **reuse before rebuild** and **PoC first, practical security**: use existing capabilities, prove a usable workflow quickly, and apply safeguards proportionate to the actual development environment. Do not add security layers that do not materially reduce a relevant risk.
 
 ## Current direction
 
@@ -27,12 +27,13 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 - Do not build a new reviewer, moderator, coordinator, worker pool, task manager, trace system, approval ledger, or orchestration framework when an existing product already provides the required capability.
 - Multi-agent, independent reviewer, personal AI workforce, and automatic resume are not MVP requirements.
 - Do not use multiple chats, agents, or tools to evade provider usage limits, entitlements, or safety policies.
-- Manual approval is not a security sandbox. Shell/process execution must be constrained by an actual OS/container/VM boundary before it is enabled.
+- The Xubuntu PC is dedicated to development and experimentation. Host-level command execution is acceptable for the PoC when actions are understood and non-destructive; do not require a container/VM solely as a formality.
+- Keep sensible safeguards: avoid destructive system/disk commands, protect credentials and important data, and inspect Git changes. Add stronger isolation only when a concrete risk or use case justifies it.
 
 ## Status
 
 - Research and architecture direction: documented from the available project discussions and prior decisions.
-- TEST A: **planned; not yet validated**.
+- TEST A: **in progress — MCP connection and basic filesystem operations verified; Git and command workflow remain to be tested**.
 - ChatCMD / CoS: **deferred pending TEST A evidence**.
 - Permanent Xubuntu installation or SSD formatting: **not authorised by this documentation**; wait for an explicit user decision.
 
