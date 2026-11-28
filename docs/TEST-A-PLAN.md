@@ -241,25 +241,27 @@ Do not include authentication tokens or secrets.
 
 A partial pass is useful evidence. Do not label it a full pass.
 
-## 13. Current progress and immediate next actions
+## 13. Current verified progress
 
-| Item | Status | Evidence / next action |
+| Item | Status | Evidence |
 |---|---|---|
-| RDC connection | PASS | Device `xubuntu` is online. |
-| Desktop Commander MCP connection | PASS | Tool calls succeeded. |
-| Filesystem scope | PASS | Current Session 2 allow-list is `/home/dzu/AgChat-Testing/session-2`; Test 45 denied out-of-scope `/home/dzu/Documents` via the actual SuperAssistant proxy route. |
-| Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
-| Session 1 local file create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back through direct RDC/Desktop Commander. |\n| Session 2 MCP file create/read | PASS | `agchat-write-test.txt` created and read back with exact content through MCP SuperAssistant → proxy → Desktop Commander. |\n| Session 2 MCP file edit | PASS | Two-line rewrite and exact read-back verified through MCP SuperAssistant → proxy → Desktop Commander. |
-| Git status/diff (Session 1) | PASS | Git evidence belongs to Session 1 workspace `/home/xubuntu/AgChat-Testing/test-a01/workspace`. |\n| Git status/diff (Session 2) | PASS | Separate local repository initialised in `/home/dzu/AgChat-Testing/session-2`; baseline `0a3027a`; status/diff exit 0. Repository-local test identity only. |
-| Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
-| Same-chat sequential calls | PASS (baseline) | Test 43 and Test 44 multi-step calls completed in the same originating ChatGPT conversation. Cross-refresh/session recovery is not a V1 acceptance requirement. |
-| Failure/retry/duplicate behaviour | PASS for V1 fixture guard; telemetry PARTIAL | Test 44 expected failure exit 7 and success exit 0 PASS; duplicate output `DUPLICATE_BLOCKED` and state count 1 confirmed. Exit 17 was unavailable after session expiry; no rerun. Generic proxy transport deduplication is not claimed or required. |
+| Xubuntu and RDC readiness | PASS | Installed Xubuntu 26.04.1 LTS on dzu-miniPC; RDC online. |
+| Disposable workspace | PASS | Current workspace: `/home/dzu/AgChat-Testing/session-2/`. |
+| MCP SuperAssistant + SSE proxy | PASS | Existing Chrome Rdeeen profile; proxy at `127.0.0.1:3006`. |
+| Desktop Commander handshake/tool discovery | PASS | 25 Desktop Commander tools available in the tested setup. |
+| File create/read/edit | PASS | Session 2 write/read/edit/read-back evidence retained. |
+| Git status/diff baseline | PASS | Session 1 and Session 2 evidence retained; Test 46 files separately identified as untracked. |
+| Same-chat sequential calls | PASS | Tests 43–46 performed in the originating conversation. |
+| Controlled process success/failure | PASS | Test 44 expected failure exit 7 and success exit 0. |
+| Duplicate side-effect guard | PASS for V1 fixture guard | `DUPLICATE_BLOCKED`, count 1 and unchanged SHA-256; exit-code telemetry incomplete. |
+| Filesystem allow-list boundary | PASS | Test 45 denied out-of-scope `/home/dzu/Documents`. |
+| Practical coding loop | PASS | Test 46 created module + four tests, all passed (exit 0), and both files were read back. |
 
-**Session 1 historical results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
+**Historical Session 1:** The original Live-session workspace was `/home/xubuntu/AgChat-Testing/test-a01/workspace`; baseline commit `e7b3fd2`. This is historical evidence only and must not be confused with the current installed Xubuntu workspace.
 
-**Session 2 environment and evidence (28 November 2026):** Installed Xubuntu on `dzu-miniPC`, home directory `/home/dzu`. Chrome Stable was used with MCP SuperAssistant `0.7.3`. The extension displayed `Connected · 30 tools` (Desktop Commander `25/25`, Browser `5/5`). Proxy transport: SSE; configured endpoint `http://localhost:3006/sse`; proxy listener had been verified on `127.0.0.1:3006`. The extension returned the actual schemas for `desktop-commander.write_file` and `desktop-commander.read_file`. A read-only directory listing returned `/home/dzu/AgChat-Testing/session-2` with `config.json`. The write tool created `agchat-write-test.txt` and returned `Successfully wrote to /home/dzu/AgChat-Testing/session-2/agchat-write-test.txt (1 lines)`. The read tool then returned `[Reading 1 lines from start (total: 1 lines, 0 remaining)]` followed by the exact expected content `AgChat TEST A Session 2 - WRITE PASS`. No other file was intentionally changed in this test.
+**Current Session 2:** Installed Xubuntu on `dzu-miniPC`, home `/home/dzu`, Chrome Stable with SuperAssistant 0.7.3 and SSE proxy at `http://localhost:3006/sse`. Desktop Commander filesystem allow-list is `/home/dzu/AgChat-Testing/session-2`. The allow-list does not sandbox arbitrary shell commands.
 
-**Session 2 follow-up (direct RDC):** A harmless Python command emitted separate stdout/stderr markers and returned shell exit 0 (137 ms). A controlled expected failure emitted both streams and child exit 7. An exclusive-create idempotency fixture returned `EXECUTED_ONCE` on first invocation and `DUPLICATE_BLOCKED` on second; read-back confirmed `EXECUTION_COUNT=1`. This proves the fixture's guard, not automatic transport-level deduplication. Desktop Commander config was changed from `allowedDirectories: []` (unrestricted filesystem access) to `["/home/dzu/AgChat-Testing/session-2"]`. In-scope listing succeeded; listing `/home/dzu/Documents` was denied with `Path not allowed`. This allow-list constrains Desktop Commander filesystem tools, not arbitrary shell commands; it is not an OS sandbox.\n\n**Next:** Validate controlled command execution, expected failure reporting and a no-duplicate retry through the already-working MCP SuperAssistant extension/proxy path. Test 43 has already proven the ChatGPT → proxy → Orchestrator → Desktop Commander route; do not replay it. Do not repeat Session 1, reinstall the bridge, or recreate the browser profile.
+**Workspace hygiene note:** The broader Session 2 Git status contains pre-existing test artifacts, a modified historical fixture and an untracked Chrome profile directory. Do not stage or commit the whole workspace. Test 46's two files are isolated by targeted status and hashes in its report. No bulk cleanup was attempted.
 
 ## 14. What happens after TEST A
 
@@ -287,17 +289,13 @@ The initial execution was marked FAILED due to an Orchestrator response-parser m
 **Boundary:** This validates the exact tested route and fixed fixture. It does not prove transport-level exactly-once semantics or generic duplicate suppression. Do not upgrade overall TEST A to PASS until the remaining acceptance items are independently closed.
 
 
-## 16. Browser operating constraint and next checkpoint
+## 16. Browser operating constraint and current checkpoint
 
-**Browser constraint (mandatory):** use Google Chrome with the Rdeeen profile only. The working profile clone is `/home/dzu/AgChat-Testing/session-2/chrome-user-profile-clone`, signed in as `Rdeeen@gmail.com`. Do not launch, open, focus or use Vivaldi or Firefox. Reuse the existing Chrome process and CDP endpoint `http://127.0.0.1:9222`; do not start another Chrome profile or a conflicting CDP instance. See repository `AGENTS.md` and [Development Method](AGCHAT-WORKING-METHOD.md).
+**Browser constraint (mandatory):** use Google Chrome with the Rdeeen profile only. Working profile clone: `/home/dzu/AgChat-Testing/session-2/chrome-user-profile-clone`, signed in as `Rdeeen@gmail.com`. Do not launch, open, focus or use Vivaldi or Firefox. If Vivaldi is already running from a pre-existing session, leave it untouched; do not terminate it without permission. Reuse Chrome PID 121736 and CDP `http://127.0.0.1:9222`; do not start another profile or conflicting CDP instance. See `AGENTS.md`.
 
-**Verified checkpoint:** Test 43 is PASS. The SSE proxy is listening on port 3006; the Orchestrator ledger is SUCCEEDED; the proof hash is recorded in [Test 43 results](TEST-43-PROXY-ORCHESTRATOR-RESULTS.md). Do not repeat its setup, fixture, approval or reconciliation.
+**Verified state:** Tests 43–46 complete the agreed V1 PoC acceptance: proxy E2E, controlled process success/failure, filesystem allow-list denial, basic same-chat continuity and practical coding loop. Test 44's duplicate exit code 17 remains unavailable because the original process session expired; the duplicate guard's no-second-side-effect state is confirmed. Do not rerun the fixture.
 
-**Checkpoint status:** Tests 43–45 have now covered the proxy route, controlled success/failure, same-chat sequential calls and filesystem allow-list denial. Test 44 duplicate process exit 17 remains PARTIAL because the original process session expired; do not rerun the fixture.
-
-**Next practical test:** complete one small, non-destructive coding task in the existing `/home/dzu/AgChat-Testing/session-2/` workspace through the current Rdeeen Chrome → SuperAssistant → proxy → Desktop Commander route. Inspect the resulting file and Git diff before accepting it. Do not repeat setup or passing tests.
-
-**Acceptance boundary:** generic transport-level exactly-once delivery and cross-refresh recovery are not V1 requirements. Use idempotent actions where practical and inspect the original process/state before retrying an ambiguous operation. Keep overall TEST A PARTIAL until the practical coding loop is demonstrated.
+**TEST A decision:** PASS for the agreed V1 PoC scope, with limitations. Generic transport-level exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed or required. Auto Execute remains OFF.
 
 ## 17. Test 44 — controlled command execution, failure and duplicate guard
 
@@ -320,14 +318,15 @@ A single read-only `desktop-commander.list_directory` request for `/home/dzu/Doc
 
 **Boundary qualification:** This verifies the filesystem allow-list only. It does not confine arbitrary shell/process execution. For this dedicated-PC PoC, host-level non-destructive commands remain acceptable with manual approval and sensible safeguards; container/VM isolation is optional, not a V1 prerequisite.
 
-## 19. Refined remaining acceptance items
+## 19. V1 limitations and optional follow-up
 
-1. **Duplicate/retry evidence:** Test 44 duplicate guard is confirmed at fixture level (state remains count 1), but exit 17 could not be recovered because the original Desktop Commander process session no longer exists. Do not rerun the side-effecting fixture. Generic transport-level exactly-once delivery is not claimed.
-2. **Failure recovery:** Proxy disconnect/reconnect and ambiguous timeout recovery remain untested. If tested, inspect the original request/process/side effect before any retry.
-3. **Same-chat baseline:** PASS for multiple sequential calls in the originating conversation (Tests 43–45). Cross-refresh/session recovery is outside the current V1 gate unless a real need arises.
+1. **Duplicate telemetry:** Test 44's duplicate fixture returned `DUPLICATE_BLOCKED`; read-back confirmed state count 1 and unchanged SHA-256. Exit 17 is unavailable because the original Desktop Commander session expired. Do not rerun. The fixture-level guard passes the V1 side-effect criterion; only exit-status telemetry is incomplete.
+2. **Generic transport exactly-once:** NOT PROVEN and not claimed. Use idempotent operations where practical; reconcile process/state before retrying ambiguous calls.
+3. **Proxy disconnect/reconnect:** NOT TESTED. Conditional follow-up only if normal use reveals a reliability need.
+4. **Shell/OS isolation:** Desktop Commander `allowedDirectories` constrains filesystem tools only. Host commands inherit the Xubuntu user's permissions. V1 accepts reviewed, non-destructive host-level commands with manual approval; container/VM isolation is optional.
+5. **Cross-refresh/session recovery:** NOT TESTED and not a V1 acceptance requirement. Sequential calls in the original conversation are PASS.
 
-Overall TEST A remains PARTIAL until the remaining failure-recovery and duplicate/retry acceptance is either evidenced or explicitly scoped as a documented V1 limitation. Do not turn generic exactly-once transport semantics into an unbounded requirement.
-
+**Final TEST A decision:** PASS for the agreed V1 PoC scope, with these limitations explicitly documented. Do not turn optional hardening or generic exactly-once semantics into an unbounded blocker.
 
 ## 20. Test 46 — practical coding loop
 
