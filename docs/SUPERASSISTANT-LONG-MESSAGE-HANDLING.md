@@ -1,6 +1,6 @@
 # SuperAssistant / ChatGPT Long-Message Handling
 
-**Status:** Investigation required — symptom observed, cause not yet isolated.  
+**Status:** CLOSED — Test 47 PASS; threshold and practical workaround established.  
 **Observed:** 28 November 2026, TEST 46 follow-up in the originating ChatGPT conversation.  
 **Evidence:** User screenshot shows a long pasted instruction appearing in the composer as a `Teks ditampal` attachment/chip rather than ordinary inline text.  
 **Scope:** Determine whether this is ChatGPT composer paste handling, SuperAssistant behaviour, browser/extension interaction, or a combination. Do not assume the attachment is created by SuperAssistant.
@@ -68,6 +68,10 @@ This investigation can be closed when:
 3. Start/middle/end marker checks establish whether content arrives intact.
 4. The working method and AGENTS instructions are updated with evidence-based guidance.
 
-## 6. Decision boundary
+## 6. Test outcome and decision
+
+The investigation is closed by [Test 47](TEST-47-LONG-PASTE-THRESHOLD.md). In the tested Chrome/ChatGPT session, 9,999 ASCII characters pasted remain inline, while 10,000 pasted characters become a `Teks ditampal` attachment. Exactly 10,000 characters inserted through the non-clipboard text-input path remain inline. This points to ChatGPT composer large-paste handling and does not establish a SuperAssistant defect. Use an 8,000-character conservative ceiling for inline clipboard paste; use reviewed files or split payloads for larger content.
+
+## 7. Decision boundary
 
 Do not modify the SuperAssistant extension, ChatGPT browser state, or proxy solely on the basis of the screenshot. First reproduce and isolate the behaviour. Preserve the current passing TEST A setup.
