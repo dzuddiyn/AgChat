@@ -571,3 +571,29 @@ Result: **PASS — post-restart write operation, host persistence, independent M
 ### Scope
 
 This is a controlled local fixture write in the disposable Session 2 workspace. It does not verify writes from ChatGPT UI after restart, atomicity for concurrent writes, or rollback/recovery after a partial write.
+
+
+## 21. ChatGPT UI-originated `write_file` after proxy restart — EXECUTION PASS / CONTENT PARTIAL
+
+**Date:** 28 November 2026  
+**Route:** ChatGPT UI → MCP SuperAssistant extension → proxy `127.0.0.1:3006` → Desktop Commander  
+**Target:** `/home/dzu/AgChat-Testing/session-2/agchat-chatgpt-ui-write.txt`
+
+### Procedure and evidence
+
+1. Submitted a request in the existing ChatGPT conversation asking for `desktop-commander.write_file` to create a new fixture in the Session 2 workspace.
+2. ChatGPT generated a `desktop-commander.write_file` tool card. The tool was explicitly run from the ChatGPT UI using its **Run** control.
+3. The extension returned a completed result card (95 chars; 105 ms).
+4. ChatGPT displayed the actual Desktop Commander result: `Successfully wrote to .../agchat-chatgpt-ui-write.txt (1 lines)`.
+5. Verified on the Xubuntu host: file exists, contains exactly the single line `AGCHAT CHATGPT UI WRITE PASS`, 28 bytes, zero newline characters. SHA-256: `82d246dedf7c798ef06ea8ec3f71397893029bade8d7d325e9f696e77969093c`.
+6. Git status reports the new fixture as untracked; `git diff --check` returned no errors.
+
+### Result
+
+- **PASS:** UI-originated MCP tool invocation, extension Run flow, proxy routing, Desktop Commander write operation, and host persistence.
+- **PARTIAL / CONTENT ASSERTION NOT MET:** The original test expected three lines, but ChatGPT generated a one-line `content` argument. The tool's success result therefore does not establish correct multi-line payload handling from the UI.
+- No other file was requested for modification. The file is a disposable fixture.
+
+### Scope and follow-up
+
+This validates the ChatGPT UI → extension → proxy → Desktop Commander write path after proxy restart for a one-line payload. Multi-line payload fidelity from the UI remains unverified. The earlier direct-SSE multi-line write/read-back test in Section 20 remains a separate PASS and must not be conflated with this UI-originated result.
