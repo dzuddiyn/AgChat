@@ -29,6 +29,19 @@ The subject is **our development workflow for getting SuperAssistant working on 
 
 **Communication rule:** visible replies stay short to conserve chat space; actions, verification and SoT updates remain complete. Do not narrate every tool call or repeat already-passed setup.
 
+### Long composer messages and text attachments
+
+A screenshot on 28 November 2026 showed a long pasted instruction represented in the ChatGPT composer as a `Teks ditampal` attachment. This is an observation only: the responsible layer (ChatGPT composer, SuperAssistant, or clipboard/browser interaction) has not yet been isolated.
+
+Until investigated:
+- Keep instructions short and focused; avoid pasting unnecessarily large prompts or shell blocks.
+- Use approved file tools for large code/document payloads, then send a short instruction referencing the exact file.
+- Before acting on a composer attachment, verify the submitted message and the attachment identity/content; do not rely on a truncated preview.
+- For ambiguous submission, inspect the conversation state before resending.
+- Do not change the passing extension/proxy setup until a controlled reproduction identifies the responsible component.
+
+Investigation and test matrix: [SUPERASSISTANT-LONG-MESSAGE-HANDLING.md](SUPERASSISTANT-LONG-MESSAGE-HANDLING.md).
+
 ## 2. Working architecture
 
 The operational workflow uses several complementary control planes:
