@@ -681,3 +681,55 @@ The AutomationService itself reads `preferences.autoInsert` and `preferences.aut
 | Actual Auto Insert → Auto Submit on current test copy after this audit | NOT TESTED |
 
 **Next action:** inspect the active extension's isolated-world preference state and test the two controls independently, without changing source code. If the defect is reproduced, prepare a minimal patch in the isolated TEST A copy only, then verify separate preference values and a read-only end-to-end Auto Insert → Auto Submit run. Do not modify the original installed extension or proxy as part of this test.
+
+
+## 24. Live runtime preference inspection — values active; independent toggle test pending
+
+**Date:** 28 November 2026  
+**Method:** Chrome DevTools Protocol (CDP) attached to the already-running Chrome instance at `127.0.0.1:9222`. The ChatGPT tab was not reloaded, Chrome was not restarted, and no extension settings were changed.
+
+### 24.1 Correct execution context identified
+
+The extension's content script runs in an isolated execution context. The active context was identified by its origin and name:
+
+- Extension ID: `ccmhmhnpkjkdcdggbcafbhkmeekcgeoo`
+- Name: `MCP SuperAssistant - AgChat TEST A`
+- Origin: `chrome-extension://ccmhmhnpkjkdcdggbcafbhkmeekcgeoo`
+
+This is the correct context for inspecting `mcpAdapter` and `__mcpAutomationState`. Page-main-world evaluation and other extensions' isolated contexts are not valid substitutes.
+
+### 24.2 Live state observed
+
+The active TEST A isolated context returned:
+
+| Runtime value | Observed |
+|---|---|
+| `__mcpAutomationState.autoInsert` | `true` |
+| `__mcpAutomationState.autoSubmit` | `true` |
+| `__mcpAutomationState.autoExecute` | `false` |
+| `autoInsertDelay` | `2` seconds |
+| `autoSubmitDelay` | `2` seconds |
+| `mcpAdapter` | Present |
+| `mcpAdapter.submitForm` | Function |
+| `mcpAdapter.selectors.SUBMIT_BUTTON` | Includes `button[aria-label="Hantar"]` |
+
+The extension UI store in localStorage (`mcp-super-assistant-ui-store`) also reports `autoInsert=true` and `autoSubmit=true`.
+
+### 24.3 Separate app-store value discrepancy
+
+A second key, `mcp-super-assistant-app-store`, contains `globalSettings.autoSubmit=false`, while the UI store and active automation state report `autoSubmit=true`.
+
+This is a distinct store value and its effect on the active automation path has not yet been established. Do not assume it overrides the UI preference or that it is harmless until its consumers are inspected.
+
+### 24.4 Result and limits
+
+- **PASS:** The active TEST A content-script context is loaded and exposes a live automation state.
+- **PASS:** The current runtime automation state is `autoInsert=true`, `autoSubmit=true`, `autoExecute=false`.
+- **PASS:** The active ChatGPT adapter has a callable `submitForm()` and the localized `Hantar` selector.
+- **NOT TESTED:** Toggling Auto Insert independently from Auto Submit through the extension's actual UI.
+- **NOT TESTED:** Whether the app-store `globalSettings.autoSubmit=false` is consumed by any relevant code path.
+- **NOT TESTED:** A fresh end-to-end Auto Insert → Auto Submit operation after this runtime inspection.
+
+### 24.5 Next action
+
+Inspect consumers of `globalSettings.autoSubmit` and the actual popover/toggle event wiring. Then test the Auto Insert and Auto Submit controls independently, restoring the original `true/true` values after each controlled test. Do not change extension source or the original extension during this step.
