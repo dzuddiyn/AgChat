@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read/edit: PASS (partial Phase 4). Git verification in the standalone session-2 workspace: BLOCKED / NOT APPLICABLE (not a Git repository). Remaining TEST A acceptance checks: controlled command/test, safe failure/retry/duplicate behaviour, and boundary verification.  
+**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read/edit: PASS (partial Phase 4). Git verification in Session 2: PASS after initialising a local repository and configuring repository-local commit identity; baseline commit `0a3027a`, `git status` and `git diff` both exit 0. Remaining TEST A acceptance checks: controlled command/test, safe failure/retry/duplicate behaviour, and boundary verification.  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -138,7 +138,7 @@ Do not place secrets or real user data in this workspace.
 
 ## 8. Phase 4 — Filesystem and Git test
 
-**Partial result — Session 2:** `A-CREATE`, `A-READ`, `A-EDIT`, and edited read-back passed in `/home/dzu/AgChat-Testing/session-2/`. The file was created with `AgChat TEST A Session 2 - WRITE PASS`, read back exactly, overwritten with the two lines `AgChat TEST A Session 2 - EDIT PASS` and `MCP file edit and read-back verification.`, then read back exactly. Git status/diff was attempted through direct RDC: `git status --short` returned exit 128 (`fatal: not a git repository`); `git diff -- agchat-write-test.txt` returned exit 129 (`Not a git repository`). A read-only search found no `.git` directory under `/home/dzu`. No repository was initialised and no files were changed by the Git check. Git verification is therefore BLOCKED / NOT APPLICABLE for this standalone workspace, not an MCP failure. Boundary checks remain pending. The new workspace path is `/home/dzu/AgChat-Testing/session-2/`, not the old Live USB workspace.
+**Partial result — Session 2:** `A-CREATE`, `A-READ`, `A-EDIT`, and edited read-back passed in `/home/dzu/AgChat-Testing/session-2/`. The file was created with `AgChat TEST A Session 2 - WRITE PASS`, read back exactly, overwritten with the two lines `AgChat TEST A Session 2 - EDIT PASS` and `MCP file edit and read-back verification.`, then read back exactly. Git status/diff initially failed because the disposable Session 2 folder had no `.git` directory, although Git 2.53.0 was installed. No `user.name`/`user.email` identity was configured either. Resolved by running `git init -b main` in this disposable workspace and setting repository-local identity (`AgChat Test`, `agchat-test@localhost`) without changing global configuration. Committed the existing test fixture as baseline `0a3027a`, appended a harmless verification line, and reran the checks: `git status --short` exit 0 showed the expected modified fixture plus two untracked test/config files; `git diff -- agchat-write-test.txt` exit 0 showed the exact appended line. Git verification: PASS. Boundary checks remain pending. The new workspace path is `/home/dzu/AgChat-Testing/session-2/`, not the old Live USB workspace.
 
 Perform the remaining operations sequentially from the original conversation:
 
@@ -147,8 +147,8 @@ Perform the remaining operations sequentially from the original conversation:
 | A-READ | Read the known fixture | Exact expected contents |
 | A-CREATE | Create a new file | File exists in workspace |
 | A-EDIT | Change a known value | Read-back shows changed value — PASS |
-| A-STATUS | Run Git status | BLOCKED / N/A here: directory is not a Git repository (exit 128). |
-| A-DIFF | Inspect Git diff | BLOCKED / N/A here: directory is not a Git repository (exit 129). |
+| A-STATUS | Run Git status | PASS after local `git init`; exit 0 and expected modified/untracked files shown. |
+| A-DIFF | Inspect Git diff | PASS; exit 0 and exact fixture change shown. |
 | A-BOUNDARY | Attempt a harmless path check outside workspace | Operation is denied or demonstrably unavailable |
 
 Do not deliberately write outside the workspace to test the boundary. A denied read/list check is sufficient if the tool exposes a safe way to test it.
@@ -250,7 +250,7 @@ A partial pass is useful evidence. Do not label it a full pass.
 | Filesystem scope | PASS | `allowedDirectories` points to `/home/xubuntu/AgChat-Testing/test-a01`. |
 | Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
 | Session 1 local file create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back through direct RDC/Desktop Commander. |\n| Session 2 MCP file create/read | PASS | `agchat-write-test.txt` created and read back with exact content through MCP SuperAssistant → proxy → Desktop Commander. |\n| Session 2 MCP file edit | PASS | Two-line rewrite and exact read-back verified through MCP SuperAssistant → proxy → Desktop Commander. |
-| Git status/diff (Session 1) | PASS | Git evidence belongs to Session 1 workspace `/home/xubuntu/AgChat-Testing/test-a01/workspace`. Session 2 `/home/dzu/AgChat-Testing/session-2` is not a repository; direct check returned exit 128/129. |
+| Git status/diff (Session 1) | PASS | Git evidence belongs to Session 1 workspace `/home/xubuntu/AgChat-Testing/test-a01/workspace`. |\n| Git status/diff (Session 2) | PASS | Separate local repository initialised in `/home/dzu/AgChat-Testing/session-2`; baseline `0a3027a`; status/diff exit 0. Repository-local test identity only. |
 | Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
 | Same-chat sequential calls | PARTIAL | Tool schema, write, and read calls succeeded sequentially in the same Tool Instructions conversation. Broader multi-step continuity and retry handling remain untested. |
 | Failure/retry/duplicate behaviour | PENDING | Test a safe failure and verify no duplicate write. |
@@ -259,7 +259,7 @@ A partial pass is useful evidence. Do not label it a full pass.
 
 **Session 2 environment and evidence (28 November 2026):** Installed Xubuntu on `dzu-miniPC`, home directory `/home/dzu`. Chrome Stable was used with MCP SuperAssistant `0.7.3`. The extension displayed `Connected · 30 tools` (Desktop Commander `25/25`, Browser `5/5`). Proxy transport: SSE; configured endpoint `http://localhost:3006/sse`; proxy listener had been verified on `127.0.0.1:3006`. The extension returned the actual schemas for `desktop-commander.write_file` and `desktop-commander.read_file`. A read-only directory listing returned `/home/dzu/AgChat-Testing/session-2` with `config.json`. The write tool created `agchat-write-test.txt` and returned `Successfully wrote to /home/dzu/AgChat-Testing/session-2/agchat-write-test.txt (1 lines)`. The read tool then returned `[Reading 1 lines from start (total: 1 lines, 0 remaining)]` followed by the exact expected content `AgChat TEST A Session 2 - WRITE PASS`. No other file was intentionally changed in this test.
 
-**Next:** Continue TEST A in the existing `/home/dzu/AgChat-Testing/session-2/` workspace. Edit/read-back and the Git applicability check are complete. Continue with a harmless command/test with stdout/stderr/exit code, followed by safe failure/retry/duplicate-execution and boundary checks. Do not initialise Git in session-2 merely to force a status/diff result; use the Session 1 Git evidence separately. Do not repeat Session 1 or reinstall the working bridge. Do not mark overall TEST A PASS until all acceptance criteria are evidenced.
+**Next:** Continue TEST A in the existing `/home/dzu/AgChat-Testing/session-2/` workspace. Edit/read-back and Git status/diff are complete. Continue with a harmless command/test through MCP with stdout/stderr/exit code, followed by safe failure/retry/duplicate-execution and boundary checks. Do not repeat Session 1 or reinstall the working bridge. Do not mark overall TEST A PASS until all acceptance criteria are evidenced.
 
 ## 14. What happens after TEST A
 
