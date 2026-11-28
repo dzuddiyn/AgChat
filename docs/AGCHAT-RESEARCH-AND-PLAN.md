@@ -5,7 +5,7 @@
 **Latest roadmap audit:** 28 November 2026  
 **Repository:** https://github.com/dzuddiyn/AgChat  
 **Purpose:** Preserve the research, reasoning, accepted decisions, constraints, and implementation plan discussed for AgChat.  
-**Current status:** TEST A is PARTIAL. MCP bridge, filesystem create/read/edit, Git verification, Test 43 full proxy/Orchestrator E2E, Test 44 controlled command success/failure, Test 45 filesystem allow-list denial, and basic same-chat sequential continuity have been demonstrated. Remaining limitations are documented in Section 16 and `docs/TEST-A-PLAN.md`.
+**Current status:** **TEST A PASS — agreed V1 PoC scope, with limitations.** Tests 43–46 demonstrate the proxy E2E route, controlled process success/failure, filesystem allow-list boundary, same-chat sequential continuity and a practical four-test coding loop. Generic transport exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed. See Section 16 and `docs/TEST-A-PLAN.md`.
 
 ---
 
@@ -546,8 +546,10 @@ When new evidence appears:
 | Git verification | PASS | Existing Session 1 and Session 2 Git status/diff evidence. |
 | Test 43 — full proxy/Orchestrator/Desktop Commander route | PASS | Originating ChatGPT UI invoked reconciliation; existing proof read back and ledger reconciled. Exact tested route only. |
 | Test 44 — controlled process success/failure | PASS | Expected failure exit 7 and success exit 0 returned through SuperAssistant proxy. |
-| Test 44 — duplicate guard | PARTIAL | `DUPLICATE_BLOCKED`; state count remains 1 and SHA-256 unchanged. Exit 17 cannot be recovered because the original process session no longer exists. Fixture was not rerun. |
+| Test 44 — duplicate guard | PASS for V1 fixture guard; telemetry PARTIAL | `DUPLICATE_BLOCKED`; state count remains 1 and SHA-256 unchanged. Exit 17 cannot be recovered because the original process session no longer exists. Fixture was not rerun. |
 | Test 45 — filesystem allow-list boundary | PASS | Out-of-scope `list_directory /home/dzu/Documents` denied through the real proxy route with `Path not allowed`. |
+| Test 46 — practical coding loop | PASS | Two Python files created through MCP, four unit tests passed, exit code 0 verified, and both files read back through the same originating conversation. |
+| Gate 1 — TEST A V1 PoC acceptance | PASS WITH LIMITATIONS | Practical coding loop, filesystem boundary, manual execution, failure reporting and same-chat continuity demonstrated. Known limits are explicitly accepted; no production-hardening claim. |
 | Basic same-chat sequential continuity | PASS | Tests 43–45 performed in the originating conversation. Cross-refresh recovery is not required for V1. |
 | Generic transport-level exactly-once | NOT PROVEN | Do not claim or build a general exactly-once layer from the fixture result. |
 | Proxy disconnect/reconnect recovery | NOT TESTED | Remains an optional follow-up if it becomes necessary for normal operation. |
@@ -567,7 +569,7 @@ For V1:
 
 ### 16.3 Duplicate and retry policy
 
-Generic exactly-once execution across a browser, proxy, MCP server and OS process is not established by these tests and should not become an unbounded V1 requirement.
+Generic exactly-once execution across a browser, proxy, MCP server and OS process is not established by these tests and is not required for the agreed V1 PoC acceptance.
 
 The practical V1 rule is:
 1. Prefer read-only and naturally idempotent operations.
@@ -582,12 +584,11 @@ Test 44's duplicate exit code 17 is unavailable because Desktop Commander report
 
 | Order | Work item | Priority | Exit condition |
 |---|---|---|---|
-| 1 | Close Test 44 duplicate evidence administratively | Low | Retain PARTIAL; no rerun. The missing exit code is a historical evidence gap. |
-| 2 | Proxy disconnect/reconnect and ambiguous-timeout recovery | Medium / conditional | Demonstrate reconnect and prove recovery inspects the original side effect before retry. Do only if needed for normal reliability. |
-| 3 | Consolidate TEST A acceptance and publish a V1 decision | High | All required V1 capabilities are evidenced; explicitly list any accepted limitations. |
-| 4 | Decide whether the current SuperAssistant + Desktop Commander workflow is already sufficient for practical coding | High | Real coding task can be completed, inspected and verified through the same chat. |
-| 5 | Only if a demonstrated gap remains, compare ChatCMD and CoS | Deferred | Candidate solves a concrete gap without duplicating orchestration or losing chat identity. |
-| 6 | Stabilise and document normal operation | Later | Reproducible startup, recovery, workspace policy and known limitations. |
+| 1 | TEST A V1 PoC gate | COMPLETE | PASS WITH LIMITATIONS; Test 46 demonstrates a complete small coding loop through the same chat. |
+| 2 | Use the current workflow for a concrete AgChat implementation task | NEXT | User-visible requirement completed with file changes, tests and reviewable Git evidence. |
+| 3 | Proxy disconnect/reconnect and ambiguous-timeout recovery | CONDITIONAL | Test only if normal use reveals a reliability need; inspect original side effects before retrying. |
+| 4 | Compare ChatCMD and CoS | DEFERRED | Reopen only if a concrete gap remains that the current bridge cannot solve. |
+| 5 | Stabilise normal operation | LATER | Reproducible startup, recovery guidance, workspace policy and known limitations.
 
 ### 16.5 Roadmap decisions from this audit
 
@@ -598,4 +599,4 @@ Test 44's duplicate exit code 17 is unavailable because Desktop Commander report
 - Browser policy is Google Chrome with the Rdeeen profile only; Vivaldi and Firefox are excluded from this workflow.
 - Auto Execute remains OFF.
 
-**Next practical milestone:** complete one small real coding task end-to-end in the existing workspace using the current chat + SuperAssistant + Desktop Commander workflow, then decide whether any additional runtime is actually needed.
+**Next practical milestone:** use the proven ChatGPT + SuperAssistant + Desktop Commander workflow for the next concrete AgChat implementation requirement. Keep ChatCMD/CoS deferred unless the real task exposes a specific missing capability.
