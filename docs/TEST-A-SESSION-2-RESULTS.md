@@ -168,6 +168,7 @@ Result: **PASS**. Git status and diff are now operational and verified in Sessio
 | Harmless command/test | PASS via MCP bridge | `desktop-commander.start_process`; stdout/stderr markers captured; PID 61954. |
 | Safe expected failure | PASS via direct RDC; bridge controlled exit-7 test PASS | Direct RDC and MCP bridge captured stdout/stderr; bridge PID 61954 exit code 7 verified by read_process_output. |
 | Workspace boundary | PASS for filesystem tools | `allowedDirectories` set to session-2; in-scope listing passed; `/home/dzu/Documents` denied. Shell commands are not confined by this allow-list. |
+| Auto Insert + Auto Submit | FAIL / NOT VERIFIED | Preferences persisted as ON, but after actual successful `read_file` execution the result panel still showed Insert; no automatic result submission occurred. `window.__mcpAutomationState` remained null after reload, indicating AutomationService state was not exposed/initialized in the active ChatGPT page. |
 
 
 ### MCP bridge process execution — PASS
@@ -296,7 +297,7 @@ This session proves that ChatGPT UI-originated Desktop Commander tool calls can 
 
 A harmless Python process was executed through the bridge using `desktop-commander.start_process`. It emitted distinct stdout and stderr markers and exited intentionally with code 7. `start_process` returned PID 61954 and both markers; the exact exit code was independently verified by calling `desktop-commander.read_process_output` for that PID. The result returned stdout `STDOUT_MARKER`, stderr `STDERR_MARKER`, exit code `7`, runtime `0.13s`, and process state `Completed`. This confirms command execution, output-channel capture, and non-zero exit-code verification through the MCP bridge.
 
-Remaining gaps: fully automatic result submission without operator action, transport retry/deduplication, and further boundary validation. Do not conflate direct RDC checks with bridge tests.
+Remaining gaps: repair and verify the Auto Insert/Auto Submit service path; transport retry/deduplication; and further boundary validation. A follow-up read_file call confirmed the file result was produced, but the result panel still exposed the manual Insert button. Although localStorage preferences showed autoInsert=true and autoSubmit=true, the page had no `window.__mcpAutomationState` even after reload. Therefore the automation settings being stored is NOT evidence that the AutomationService is active. A generated assistant response claiming Auto Insert/Auto Submit PASS was contradicted by direct browser UI inspection and is explicitly not accepted as test evidence.
 
 Session 1's direct RDC/Desktop Commander coding-loop results remain separate evidence and must not be conflated with Session 2's browser-extension/proxy bridge results.
 
@@ -304,8 +305,9 @@ Session 1's direct RDC/Desktop Commander coding-loop results remain separate evi
 
 Continue in the existing workspace `/home/dzu/AgChat-Testing/session-2/`:
 
-1. Investigate whether the Insert → chip flush → submit sequence can be safely automated without modifying the extension's installed code.
-2. Test transport retry/deduplication with a harmless idempotency fixture; do not assume the fixture guard proves transport-level deduplication.
-3. Assess whether the configured filesystem scope is sufficiently demonstrated.
+1. Diagnose why `AutomationService` is not exposed (`window.__mcpAutomationState === null`) despite service initialization being present in the extension bundle; inspect extension initialization and adapter readiness before changing code.
+2. Verify Auto Insert and Auto Submit through a new actual read-only MCP call; require UI evidence that the result is inserted and submitted without operator action.
+3. Test transport retry/deduplication with a harmless idempotency fixture; do not assume the fixture guard proves transport-level deduplication.
+4. Assess whether the configured filesystem scope is sufficiently demonstrated.
 
 Do not repeat successful setup or Session 1 tests. Do not label overall TEST A as PASS until the remaining acceptance criteria have evidence.
