@@ -597,3 +597,27 @@ This is a controlled local fixture write in the disposable Session 2 workspace. 
 ### Scope and follow-up
 
 This validates the ChatGPT UI → extension → proxy → Desktop Commander write path after proxy restart for a one-line payload. Multi-line payload fidelity from the UI remains unverified. The earlier direct-SSE multi-line write/read-back test in Section 20 remains a separate PASS and must not be conflated with this UI-originated result.
+
+
+## 22. ChatGPT UI-originated `read_file` after proxy restart — NOT VERIFIED
+
+**Date:** 28 November 2026  
+**Target:** `/home/dzu/AgChat-Testing/session-2/agchat-chatgpt-ui-write.txt`
+
+### Attempt
+
+Three prompts were submitted in the existing ChatGPT UI conversation requesting `desktop-commander.read_file` for the target fixture. The assistant completed its turns, but no new `desktop-commander.read_file` tool card was generated. Therefore there was no UI **Run** action and no extension result-return event for this read request.
+
+### Independent host observation (not an MCP UI test)
+
+- Host `cat -A` confirmed the file contains `AGCHAT CHATGPT UI WRITE PASS`.
+- File size: 28 bytes; line count: 0 (the file has no trailing newline).
+- SHA-256 remains `82d246dedf7c798ef06ea8ec3f71397893029bade8d7d325e9f696e77969093c`.
+- Proxy listener remained active on `127.0.0.1:3006`.
+- Fixture remains untracked; no other file was changed by this verification.
+
+### Result and interpretation
+
+**NOT VERIFIED / BLOCKED AT TOOL-CALL GENERATION.** This is not evidence of a proxy or Desktop Commander read failure: the UI never produced a read tool call to execute. The host observation confirms file persistence only and must not be represented as an MCP read-back PASS.
+
+Next diagnostic should focus on why ChatGPT is not generating a `read_file` card in this conversation, despite the earlier successful UI-originated `write_file` card. Do not alter the proxy or extension until tool-call generation is isolated.
