@@ -28,6 +28,14 @@ The task is to build, configure, test and troubleshoot **MCP SuperAssistant on X
 
 Detailed procedure: [docs/AGCHAT-WORKING-METHOD.md](docs/AGCHAT-WORKING-METHOD.md).
 
+## 2A. Long-message handling
+
+- A 28 November 2026 screenshot showed a long pasted prompt represented in the ChatGPT composer as a `Teks ditampal` attachment.
+- The responsible layer is not yet identified; do not assume it is a SuperAssistant defect.
+- Follow [docs/SUPERASSISTANT-LONG-MESSAGE-HANDLING.md](docs/SUPERASSISTANT-LONG-MESSAGE-HANDLING.md) before changing the extension or proxy.
+- Until tested, keep instructions concise; use approved file tools for large payloads; verify attachment content before acting on it.
+- Do not blindly resend an ambiguous long-message submission.
+
 ## 3. Continue from verified checkpoints
 
 - Do not repeat setup or tests already marked PASS unless new evidence invalidates them.
