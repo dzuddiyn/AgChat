@@ -516,3 +516,29 @@ Section 17 initially stated that the post-reconnect UI tool invocation was not v
 | Exactly-once execution across restart | NOT TESTED |
 
 **Correction:** The earlier "post-reconnect UI tool invocation — NOT VERIFIED" statement in Section 17 is superseded by this Section 18. The end-to-end read-only tool path is now verified after a full proxy restart. This does not establish replay or exactly-once semantics for an in-flight side-effecting operation.
+
+
+## 19. Post-restart `desktop-commander.start_process` via MCP SSE — PASS
+
+**Date:** 28 November 2026  
+**Proxy:** restarted instance listening on `127.0.0.1:3006`.
+
+### Procedure and evidence
+
+After the full proxy restart, a fresh SSE session was opened and a JSON-RPC `tools/call` request (ID `99202`) invoked `desktop-commander.start_process` with a harmless Python command:
+
+`python3 -c 'print("POST_RESTART_PROCESS_PASS"); print(2+3)'`
+
+Observed response:
+
+- HTTP POST: `202 Accepted`
+- JSON-RPC response ID: `99202`
+- Tool result: process started (PID `87074`)
+- Captured stdout: `POST_RESTART_PROCESS_PASS` and `5`
+- Process completed successfully.
+
+Result: **PASS — post-restart proxy → Desktop Commander → start_process → captured output/result path is working.**
+
+### Scope clarification
+
+This is a direct MCP SSE invocation after restart. It verifies the tool and result path through the proxy, but it is not evidence of a ChatGPT UI-originated `start_process` invocation. ChatGPT UI read_file after restart was separately verified in Section 18. A UI-originated start_process call remains unverified.
