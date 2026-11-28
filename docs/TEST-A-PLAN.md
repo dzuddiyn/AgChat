@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read/edit: PASS (partial Phase 4). Git verification in Session 2: PASS after initialising a local repository and configuring repository-local commit identity; baseline commit `0a3027a`, `git status` and `git diff` both exit 0. Remaining TEST A acceptance checks: controlled command/test, safe failure/retry/duplicate behaviour, and boundary verification.  
+**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read/edit and Git verification: PASS. Test 43 — full ChatGPT → SuperAssistant → SSE proxy → Orchestrator → Desktop Commander route: PASS. Overall TEST A remains PARTIAL until remaining acceptance checks (workspace boundary, safe failure/retry, transport-level duplicate behaviour and broader same-chat continuity) are closed.  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -271,3 +271,19 @@ Only after the evidence is reviewed:
 5. Adopt an existing runtime only if it demonstrably adds value.
 
 Until then, do not install ChatCMD or CoS and do not build a custom orchestration framework.
+
+
+## 15. Test 43 — SuperAssistant proxy + Orchestrator E2E
+
+**Result: PASS (28 November 2026).** The originating ChatGPT conversation invoked `agchat-orchestrator.agchat_reconcile_test43` through the isolated MCP SuperAssistant extension and local SSE proxy. The proxy log confirms the `tools/call`; the Orchestrator then called Desktop Commander `read_file` and verified the existing proof file. The operation ledger ended in `SUCCEEDED` with a `RECONCILED_SUCCEEDED` event. The fixture was not rerun during reconciliation.
+
+- Proxy endpoint: `http://localhost:3006/sse`.
+- Proxy config: `config-test43.json` (Desktop Commander + AgChat Orchestrator).
+- Tool counts: Desktop Commander 25; Orchestrator 5.
+- Proof: `/home/dzu/AgChat-Testing/session-2/agchat-test43-proxy-e2e-proof.txt`.
+- SHA-256: `172b5e80f247d214a99166664f4738892ea2894ebc0e8475a2865e3e82c951eb`.
+- Auto Execute: OFF; manual Run only.
+
+The initial execution was marked FAILED due to an Orchestrator response-parser mismatch, although Desktop Commander had created the proof. The reconciliation tool independently read the existing marker through Desktop Commander and corrected the ledger without repeating the side effect. Full detail: [TEST 43 result](TEST-43-PROXY-ORCHESTRATOR-RESULTS.md).
+
+**Boundary:** This validates the exact tested route and fixed fixture. It does not prove transport-level exactly-once semantics or generic duplicate suppression. Do not upgrade overall TEST A to PASS until the remaining acceptance items are independently closed.
