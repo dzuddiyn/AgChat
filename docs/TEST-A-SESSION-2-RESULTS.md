@@ -1074,3 +1074,36 @@ The test client did not capture any matching JSON-RPC response event during the 
 ### 30.4 Next safe test
 
 Do not infer deduplication guarantees from HTTP 202 or proxy log forwarding. The next valid test must use the established extension session or a correctly paired MCP client/server session and a controlled idempotency fixture. Keep Auto Execute OFF and use a harmless, isolated test target. Do not use an ordinary overwrite operation as a duplicate-side-effect test.
+
+
+## 31. Atomic idempotency fixture — PASS (application-level only)
+
+**Date:** 28 November 2026  
+**Target:** Isolated fixture under `/home/dzu/AgChat-Testing/session-2/idempotency-fixture/`.
+
+### 31.1 Fixture design
+
+Created `agchat-idempotency-fixture.py` with a fixed logical operation key `agchat-test-op-20261128-01`. Each invocation appends one line to an attempts log. The simulated side effect creates a marker using POSIX exclusive-create semantics (`O_CREAT | O_EXCL`): only the first invocation can create the marker; subsequent invocations detect the existing marker and return `DUPLICATE_SUPPRESSED`.
+
+The fixture is isolated from project source files and does not modify application data.
+
+### 31.2 Concurrent execution
+
+Two instances of the same fixture were launched concurrently.
+
+Observed:
+- Both process exit codes: `0,0`.
+- Invocation 1: `SIDE_EFFECT_CREATED`.
+- Invocation 2: `DUPLICATE_SUPPRESSED`.
+- Attempts log lines: `2`.
+- Side-effect marker files: `1`.
+- Marker content records the operation key and the PID that won the exclusive create.
+- Marker SHA-256: `8fd6f467248f54bbb109695b92e19cb3f55f75deb394225c9b7268ee9ede1c1a`.
+
+**Result: PASS for the fixture's application-level atomic guard.** Two concurrent executions were observed, while the guarded side effect was created exactly once.
+
+### 31.3 Scope and limitations
+
+This result validates the fixture's local atomic idempotency mechanism only. Both invocations were launched from a single controlled host shell; they were **not** duplicate JSON-RPC requests through the MCP SuperAssistant proxy or ChatGPT UI. It therefore does not resolve Section 30's inconclusive transport-level duplicate-ID probe and does not establish exactly-once semantics for AgChat, Desktop Commander, or the proxy.
+
+Auto Execute remains OFF. No production or project data was changed.
