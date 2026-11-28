@@ -303,8 +303,7 @@ Session 1's direct RDC/Desktop Commander coding-loop results remain separate evi
 Continue in the existing workspace `/home/dzu/AgChat-Testing/session-2/`:
 
 1. Investigate whether the Insert → chip flush → submit sequence can be safely automated without modifying the extension's installed code.
-2. Run a second controlled expected-failure case through the bridge and verify the exact non-zero exit code.
-3. Test transport retry/deduplication with a harmless idempotency fixture; do not assume the fixture guard proves transport-level deduplication.
-4. Assess whether the configured filesystem scope is sufficiently demonstrated.
+2. Test transport retry/deduplication with a harmless idempotency fixture; do not assume the fixture guard proves transport-level deduplication.
+3. Assess whether the configured filesystem scope is sufficiently demonstrated.
 
 Do not repeat successful setup or Session 1 tests. Do not label overall TEST A as PASS until the remaining acceptance criteria have evidence.
