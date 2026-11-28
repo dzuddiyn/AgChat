@@ -263,14 +263,12 @@ A partial pass is useful evidence. Do not label it a full pass.
 
 ## 14. What happens after TEST A
 
-Only after the evidence is reviewed:
-1. Identify the actual gaps.
-2. Evaluate ChatCMD against those gaps.
-3. Evaluate CoS against those gaps.
-4. Compare chat identity, access control, worker routing, recovery, and resource use.
-5. Adopt an existing runtime only if it demonstrably adds value.
+TEST A has passed for the agreed V1 PoC scope, with limitations recorded in the roadmap.
 
-Until then, do not install ChatCMD or CoS and do not build a custom orchestration framework.
+1. Use the validated ChatGPT + SuperAssistant + Desktop Commander workflow for the next concrete AgChat implementation task.
+2. Keep ChatCMD and CoS deferred unless a real task reveals a specific missing capability.
+3. If a gap is demonstrated, compare only the candidate(s) that address that gap against chat identity, permissions, resource use and maintenance burden.
+4. Do not add custom orchestration, worker routing, or a container/VM by default.
 
 
 ## 15. Test 43 — SuperAssistant proxy + Orchestrator E2E
