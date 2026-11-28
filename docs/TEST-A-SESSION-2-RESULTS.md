@@ -733,3 +733,47 @@ This is a distinct store value and its effect on the active automation path has 
 ### 24.5 Next action
 
 Inspect consumers of `globalSettings.autoSubmit` and the actual popover/toggle event wiring. Then test the Auto Insert and Auto Submit controls independently, restoring the original `true/true` values after each controlled test. Do not change extension source or the original extension during this step.
+
+
+## 25. AppStore field audit and isolated ChatGPT toggle patch prepared
+
+**Date:** 28 November 2026
+
+### 25.1 `globalSettings.autoSubmit` consumer audit
+
+Source inspection of the TEST A content bundle found that `globalSettings.autoSubmit` is declared with its default value in the legacy AppStore object, but no read/write consumer of that specific property exists elsewhere in the bundle. The observed AppStore value `false` is therefore not currently evidenced as controlling the active Auto Submit path. The active automation state continues to derive from the UI store preferences.
+
+The AppStore still has unrelated theme and sidebar-width synchronization consumers. Do not confuse those with `globalSettings.autoSubmit`.
+
+### 25.2 Minimal ChatGPT-only patch prepared
+
+A separate candidate file was prepared:
+
+`/home/dzu/AgChat-Testing/session-2/mcp-superassistant-extension-test/content/index.iife.autosubmit-toggle-fixed.js`
+
+Diff:
+
+`/home/dzu/AgChat-Testing/session-2/mcp-superassistant-extension-test/autosubmit-toggle-fix.diff`
+
+The patch changes only the `ChatGPTAdapter` toggle manager in the isolated TEST A copy:
+
+1. `setAutoInsert(value)` now writes `preferences.autoInsert`.
+2. `getState()` now reads `preferences.autoInsert` and `preferences.autoSubmit` independently.
+
+The original TEST A `content/index.iife.js` remains unchanged. The original installed extension and Chrome profile were not modified.
+
+### 25.3 Validation
+
+| Check | Result |
+|---|---|
+| Exactly one ChatGPT adapter getter defect targeted | PASS |
+| Exactly one ChatGPT adapter setter defect targeted | PASS |
+| Patch limited to ChatGPT adapter region | PASS |
+| Candidate JavaScript syntax check (`node --check`) | PASS |
+| Original source SHA-256 unchanged | PASS |
+| Candidate patch SHA-256 | `87a3f4e5e5c529b405e60296cf758cc6ae463989c50f37a391869fc046858296` |
+| Runtime load / independent toggle test | NOT YET RUN |
+
+### 25.4 Next action
+
+Load the candidate as a separate isolated unpacked test extension (do not overwrite the currently loaded TEST A extension), verify the two controls change only their own preference keys, then run one controlled Auto Insert → Auto Submit test in ChatGPT. Preserve the existing extension and proxy until the candidate passes.
