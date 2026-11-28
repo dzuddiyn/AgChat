@@ -96,11 +96,15 @@ CDP is the preferred browser-control plane when the browser is already running w
 
 ### Chrome profile and CDP launch discipline
 
-The working browser for SuperAssistant development is the **Google Chrome profile clone** at:
+The only approved browser for AgChat work is **Google Chrome using the Rdeeen profile** (`Rdeeen@gmail.com`). Do not open, launch, focus, or use Vivaldi; do not switch to Firefox or another browser.
+
+The dedicated working copy of that profile is:
 
 `/home/dzu/AgChat-Testing/session-2/chrome-user-profile-clone`
 
-This clone preserves the test profile's extensions and signed-in browser state while allowing a dedicated CDP endpoint. Launch it with:
+It preserves Rdeeen's signed-in browser state and the isolated SuperAssistant test extension. The active Chrome process must use this exact `--user-data-dir`. Verify the profile identity from its `Local State` file and verify the Chrome process arguments before controlling the browser.
+
+The tested launch command (use only when that profile is not already running) is:
 
 ```bash
 /usr/bin/google-chrome \
@@ -110,7 +114,9 @@ This clone preserves the test profile's extensions and signed-in browser state w
   --no-first-run --no-default-browser-check
 ```
 
-Use `http://127.0.0.1:9222/json/version` and `/json/list` to verify CDP and select the exact ChatGPT conversation. The normal Chrome data directory may reject remote debugging; use the dedicated clone rather than altering the user's default profile. Do not switch to Vivaldi for this workflow when the requested Chrome profile is available. Confirm the active extension ID before inspecting or patching an extension.
+**Do not launch a second Chrome instance or another profile when the Rdeeen Chrome session is already running.** Reuse its existing CDP endpoint. A second Chrome process can trigger Chrome's single-instance handoff and create ambiguity about which profile owns the debugging port. Check `ps`, `ss -ltnp`, `/json/version` and `/json/list` first. The active tested endpoint is `http://127.0.0.1:9222`; the listening process must resolve to the Rdeeen profile clone.
+
+Confirm the isolated test extension ID (`ccmhmhnpkjkdcdggbcafbhkmeekcgeoo`) before inspecting or patching it. Keep the original Web Store extension and original Chrome data directory untouched.
 
 Use CDP to:
 - Discover current tabs through `/json/list`.
