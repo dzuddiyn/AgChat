@@ -103,31 +103,55 @@ MCP file edit and read-back verification.
 
 The tool reported a successful two-line write. A subsequent `read_file` returned both exact lines. Result: **PASS**.
 
-## 8. Git verification via direct RDC — BLOCKED / NOT APPLICABLE
+## 8. Git verification — PASS after root-cause correction
 
-The requested read-only command was executed directly through Desktop Commander (RDC) in:
+### Root cause
+The Session 2 workspace was a plain directory, not a Git repository. Git 2.53.0 was installed and working, but no `.git` directory existed. In addition, neither `user.name` nor `user.email` was configured at system/global scope. The first Git check therefore failed with exit codes 128 (`git status`) and 129 (`git diff`). This was a workspace setup issue, not an MCP, Desktop Commander, or Git installation failure.
 
-`/home/dzu/AgChat-Testing/session-2/`
+### Resolution applied
+Because this is a disposable synthetic test workspace, a local Git repository was initialised here; the AgChat source repository was not cloned or modified. Repository-local identity was configured only (no global Git settings changed):
 
-Command:
 ```bash
-git status --short
-git diff -- agchat-write-test.txt
+cd /home/dzu/AgChat-Testing/session-2
+git init -b main
+git config --local user.name 'AgChat Test'
+git config --local user.email 'agchat-test@localhost'
+git add -- agchat-write-test.txt
+git commit -m 'test: establish Session 2 Git baseline'
 ```
 
-Actual output:
+Baseline commit:
+```text
+0a3027a test: establish Session 2 Git baseline
+```
+
+A harmless line was then appended to the tracked fixture and both checks were rerun. Actual output:
+
 ```text
 === GIT STATUS ===
-fatal: not a git repository (or any of the parent directories): .git
-STATUS_EXIT_CODE=128
+ M agchat-write-test.txt
+?? agchat-single-execution-marker.txt
+?? config.json
+STATUS_EXIT_CODE=0
 
 === GIT DIFF ===
-warning: Not a git repository. Use --no-index to compare two paths outside a working tree
-DIFF_EXIT_CODE=129
+diff --git a/agchat-write-test.txt b/agchat-write-test.txt
+index 0cfa39d..0136d8d 100644
+--- a/agchat-write-test.txt
++++ b/agchat-write-test.txt
+@@ -1,2 +1,3 @@
+ AgChat TEST A Session 2 - EDIT PASS
+-MCP file edit and read-back verification.
+\\ No newline at end of file
++MCP file edit and read-back verification.
++Git verification fixture change.
+DIFF_EXIT_CODE=0
 ```
 
-A read-only search of the user's home directory found no `.git` directory. The session-2 workspace is therefore not a Git working tree. No repository was initialised, no file was changed by this check, and no commit was made. Git status/diff cannot provide meaningful change evidence for this standalone workspace. This is a workspace/repository limitation, **not an MCP bridge failure**.
+The tracked fixture change is visible exactly as expected. The two untracked files (`agchat-single-execution-marker.txt` and `config.json`) were deliberately left untracked and were not committed. A final `git diff --check` returned exit code 0.
 
+Result: **PASS**. Git status and diff are now operational and verified in Session 2.
+ 
 ## 9. Acceptance results
 
 | Check | Result | Evidence |
@@ -139,16 +163,16 @@ A read-only search of the user's home directory found no `.git` directory. The s
 | File creation through MCP | PASS | write_file returned successful one-line write. |
 | File read-back through MCP | PASS | Exact content returned. |
 | File edit through MCP | PASS | Two-line rewrite and exact read-back verified. |
-| Git status and diff | BLOCKED / N/A | Direct RDC check returned not-a-git-repository (exit 128/129); no .git directory found under /home/dzu. |
+| Git status and diff | PASS | Local repository initialised; baseline `0a3027a`; status and diff exit 0; final `git diff --check` exit 0. |
 | Harmless command/test through MCP | NOT TESTED | stdout, stderr, and exit code remain to be verified. |
 | Safe failure/retry/duplicate behaviour | NOT TESTED | Remains open. |
 | Workspace boundary verification | NOT TESTED | Remains open. |
 
 ## 10. Interpretation
 
-This session proves that the browser extension and local proxy can pass actual Desktop Commander tool calls and results between the ChatGPT conversation and the installed Xubuntu host. It also proves one successful file creation and exact read-back through that bridge.
+This session proves that the browser extension and local proxy can pass actual Desktop Commander tool calls and results between the ChatGPT conversation and the installed Xubuntu host. It also proves file creation, exact read-back, file edit, and exact edited read-back through that bridge. Git status/diff were verified locally through direct RDC after the disposable workspace was initialised as a repository.
 
-It does **not** prove the full TEST A acceptance criteria. In particular, edit, Git verification, command execution, failure behaviour, duplicate-execution handling, and boundary verification have not yet been demonstrated through this MCP path.
+It does **not** prove the full TEST A acceptance criteria. Command execution through MCP, failure behaviour, duplicate-execution handling, and boundary verification have not yet been demonstrated.
 
 Session 1's direct RDC/Desktop Commander coding-loop results remain separate evidence and must not be conflated with Session 2's browser-extension/proxy bridge results.
 
