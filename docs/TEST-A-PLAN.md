@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant extension and proxy: NEXT.  
+**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read: PASS (partial Phase 4). Remaining TEST A acceptance checks: EDIT, Git verification, controlled command/test, safe failure/retry/duplicate behaviour, and boundary verification.  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -127,18 +127,20 @@ Do not place secrets or real user data in this workspace.
 
 ## 7. Phase 3 — Desktop Commander and MCP handshake
 
+**Session 2 result: PASS.** The MCP SuperAssistant extension reported `Connected` and `30 tools`; its Desktop Commander group showed `25/25` enabled and Browser showed `5/5`. The local proxy was configured for SSE at `http://localhost:3006/sse` (proxy listener previously verified on `127.0.0.1:3006`). `get_tool_schema` returned the actual schema for `desktop-commander.write_file` and `desktop-commander.read_file`. A read-only `list_directory` call also returned the actual contents of `/home/dzu/AgChat-Testing/session-2`. The write and read calls below then confirmed the round trip.
+
 - Install/configure Desktop Commander according to its version-specific documentation.
-- Scope filesystem access to the disposable workspace only.
 - Connect Desktop Commander to the proxy.
 - Complete MCP handshake and enumerate tools.
-- Start with read-only operations.
-- Verify that the tool result is injected into the original ChatGPT conversation.
+- Verify that tool results are returned to the originating ChatGPT conversation.
 
-**Exit condition:** Tool discovery succeeds and a read-only call returns the expected result in the same conversation.
+**Exit condition: PASS for MCP connection, tool discovery, and read-only result return.** This does not yet prove the complete TEST A acceptance criteria.
 
 ## 8. Phase 4 — Filesystem and Git test
 
-Perform these operations sequentially from the original conversation:
+**Partial result — Session 2:** `A-CREATE` and `A-READ` passed in `/home/dzu/AgChat-Testing/session-2/`. The file `/home/dzu/AgChat-Testing/session-2/agchat-write-test.txt` was created with the exact content `AgChat TEST A Session 2 - WRITE PASS`; the tool returned `Successfully wrote to ... (1 lines)`. A subsequent `read_file` returned one line, exactly matching the written content. `A-EDIT`, Git status/diff, and boundary checks remain pending. The new workspace path is `/home/dzu/AgChat-Testing/session-2/`, not the old Live USB workspace.
+
+Perform the remaining operations sequentially from the original conversation:
 
 | Test | Action | Expected evidence |
 |---|---|---|
@@ -247,15 +249,17 @@ A partial pass is useful evidence. Do not label it a full pass.
 | Desktop Commander MCP connection | PASS | Tool calls succeeded. |
 | Filesystem scope | PASS | `allowedDirectories` points to `/home/xubuntu/AgChat-Testing/test-a01`. |
 | Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
-| File create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back. |
+| Session 1 local file create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back through direct RDC/Desktop Commander. |\n| Session 2 MCP file create/read | PASS | `agchat-write-test.txt` created and read back with exact content through MCP SuperAssistant → proxy → Desktop Commander. |\n| Session 2 MCP file edit | PENDING | Not yet tested through the browser extension/proxy bridge. |
 | Git status/diff | PASS | Git 2.53.0 installed; repository initialised in test workspace; staged diff inspected; baseline commit `e7b3fd2`; final status clean. |
 | Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
-| Same-chat sequential calls | PENDING | Continue several tool calls in this same conversation. |
+| Same-chat sequential calls | PARTIAL | Tool schema, write, and read calls succeeded sequentially in the same Tool Instructions conversation. Broader multi-step continuity and retry handling remain untested. |
 | Failure/retry/duplicate behaviour | PENDING | Test a safe failure and verify no duplicate write. |
 
-**Latest results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
+**Session 1 historical results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
 
-**Next:** Stop work on the temporary Live USB. Back up Windows data, install Xubuntu to the SSD, and complete the basic environment setup. Then resume with **Session 2 — MCP SuperAssistant extension and proxy**. Do not repeat Session 1; its disposable-workspace coding-loop subtests are recorded as PASS. The browser-extension → local proxy → Desktop Commander end-to-end bridge remains unverified.
+**Session 2 environment and evidence (28 November 2026):** Installed Xubuntu on `dzu-miniPC`, home directory `/home/dzu`. Chrome Stable was used with MCP SuperAssistant `0.7.3`. The extension displayed `Connected · 30 tools` (Desktop Commander `25/25`, Browser `5/5`). Proxy transport: SSE; configured endpoint `http://localhost:3006/sse`; proxy listener had been verified on `127.0.0.1:3006`. The extension returned the actual schemas for `desktop-commander.write_file` and `desktop-commander.read_file`. A read-only directory listing returned `/home/dzu/AgChat-Testing/session-2` with `config.json`. The write tool created `agchat-write-test.txt` and returned `Successfully wrote to /home/dzu/AgChat-Testing/session-2/agchat-write-test.txt (1 lines)`. The read tool then returned `[Reading 1 lines from start (total: 1 lines, 0 remaining)]` followed by the exact expected content `AgChat TEST A Session 2 - WRITE PASS`. No other file was intentionally changed in this test.
+
+**Next:** Continue TEST A in the existing `/home/dzu/AgChat-Testing/session-2/` workspace. Test edit/read-back, then Git status/diff, then a harmless command/test with stdout/stderr/exit code, followed by a safe failure/retry/duplicate-execution check. Do not repeat Session 1 or reinstall the working bridge. Do not mark overall TEST A PASS until all acceptance criteria are evidenced.
 
 ## 14. What happens after TEST A
 
