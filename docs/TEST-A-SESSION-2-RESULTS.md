@@ -1325,3 +1325,85 @@ Script SHA-256:
 `8476ff227f6d76f474d573a38c1d59d2a7d5735eb8f3e9ff2834ed3ef2ba4160`
 
 Proxy remained healthy on `127.0.0.1:3006`, PID 85184. No production data or destructive operation was involved.
+
+
+## 37. Crash recovery and execution-state reconciliation — PASS (isolated SQLite ledger)
+
+**Date:** 28 November 2026  
+**Target:** Isolated crash-recovery fixture in `/home/dzu/AgChat-Testing/session-2/`.  
+**Safety:** Only disposable test markers and a dedicated SQLite database were used. The MCP proxy, Desktop Commander service, extension, and project source files were not stopped or modified.
+
+### 37.1 Test design
+
+Created `agchat-crash-recovery-test.py`. The fixture uses a SQLite execution ledger with WAL mode and `synchronous=FULL`, storing an operation key, state, attempt ID, timestamp, and recovery evidence.
+
+The test intentionally terminates only its own child process using `os._exit(71)` at two controlled crash points. This simulates abrupt process termination without killing any shared service.
+
+The recovery logic checks the persistent side-effect marker before deciding the recovered state:
+- Marker exists → reconcile stale `RUNNING` to `SUCCEEDED`.
+- Marker absent → reconcile stale `RUNNING` to `UNKNOWN`; a retry is not automatic. The test then performs an explicitly controlled retry for this harmless fixture and records `SUCCEEDED`.
+
+### 37.2 Scenario A — crash before side effect
+
+Sequence:
+1. Child writes `RUNNING` and commits the ledger transaction.
+2. Child exits abruptly with code 71 before creating the side-effect marker.
+3. Recovery finds ledger state `RUNNING` and no marker.
+4. Recovery changes state to `UNKNOWN`, evidence `no_marker_found_after_crash`.
+5. The test explicitly retries this known-safe fixture operation.
+6. Retry creates the marker and updates the ledger to `SUCCEEDED`.
+
+Observed:
+- Child exit code: 71.
+- Recovery state: `UNKNOWN`.
+- Final state after controlled retry: `SUCCEEDED`.
+- Marker SHA-256: `a7b16b21906b74bc5d49546aa7971ac361b66afa81df5dfefc5e471a6579ad5e`.
+
+**Result: PASS.** An operation with no completion evidence was not blindly marked failed or automatically rerun; it entered `UNKNOWN` first.
+
+### 37.3 Scenario B — crash after side effect, before success commit
+
+Sequence:
+1. Child writes `RUNNING` and commits the ledger transaction.
+2. Child creates and fsyncs the side-effect marker.
+3. Child exits abruptly with code 71 before writing `SUCCEEDED` to the ledger.
+4. Recovery finds stale `RUNNING` but detects the existing marker.
+5. Recovery reconciles the ledger to `SUCCEEDED` without rerunning the side effect.
+
+Observed:
+- Child exit code: 71.
+- Recovery state: `SUCCEEDED`.
+- Evidence: `marker_found_during_recovery`.
+- Marker SHA-256: `22a611b6057fcbbb5473d4062745df0f0af19e28c0c7647ed6963708f9b37ae5`.
+
+**Result: PASS.** The recovered process recognized the completed side effect and did not repeat it.
+
+### 37.4 Final ledger evidence
+
+Both operation records ended in `SUCCEEDED`:
+- `agchat-crash-before_effect-20261128` — `retry_created_marker_after_unknown`.
+- `agchat-crash-after_effect-20261128` — `marker_found_during_recovery`.
+
+Artifacts:
+- Test script: `agchat-crash-recovery-test.py`
+- Script SHA-256: `efc3e7af8f401255ee4665b1e77006e127a26834f9c87b7b17170607037f791b`
+- SQLite ledger: `agchat-crash-recovery-ledger.sqlite`
+- Database SHA-256 after test: `6c3b483e3f4ba28382383c60c8c5a48c574deb4ce0bb26e89091881bb9c024e9`
+
+### 37.5 Result, limitations, and design implication
+
+**PASS — both controlled crash windows were recovered as expected by the isolated ledger/marker reconciliation fixture.**
+
+The test supports the following execution-state model:
+
+`PENDING → RUNNING → SUCCEEDED / FAILED / UNKNOWN`
+
+Recovery rule:
+- A stale `RUNNING` record must first become a reconciliation candidate.
+- If durable evidence proves the side effect exists, reconcile to `SUCCEEDED`.
+- If evidence is absent or inconclusive, use `UNKNOWN`; require inspection or an explicitly approved safe retry.
+- Do not equate a lost response, process crash, or missing acknowledgement with proof that the side effect did not occur.
+
+**Limitations:** This validates the test fixture's SQLite ledger and known marker evidence only. It does not prove crash consistency for arbitrary external side effects, distributed transactions, all Desktop Commander tools, or exactly-once MCP execution. A production design needs operation-specific evidence/adapters, durable idempotency keys, and a policy for unresolved `UNKNOWN` records.
+
+No production data, proxy process, Desktop Commander service, or project source file was modified.
