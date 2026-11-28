@@ -288,6 +288,7 @@ Verified working capabilities from the recorded sessions:
 - UI-originated read-only tool result returning to ChatGPT with Auto Insert and Auto Submit.
 - Test 42 real Desktop Commander MCP execution through the direct connector path, with SQLite intent/approval ledger, proof file and duplicate submission suppression.
 - Test 43 full E2E route: originating ChatGPT UI → isolated SuperAssistant extension → local SSE proxy → AgChat Orchestrator → Desktop Commander `read_file`, with proof marker and SQLite reconciliation; Auto Execute remained OFF.
+- Test 44 controlled command/failure/duplicate test through the same ChatGPT → SuperAssistant → proxy → Desktop Commander route: expected failure exit 7 and success exit 0 verified; duplicate guard returned `DUPLICATE_BLOCKED` and state count remained 1, while duplicate exit 17 remains unverified. Auto Execute remained OFF.
 
 Important boundaries:
 - Test 42 was a direct Desktop Commander connector call, not ChatGPT → SuperAssistant proxy → Orchestrator → Desktop Commander E2E.
