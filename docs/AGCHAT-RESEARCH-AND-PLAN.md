@@ -500,7 +500,7 @@ Do not add these to the current build unless a new requirement is approved:
 | D-002 | Reuse existing open-source/native capabilities before building new runtime features. | Accepted |
 | D-003 | Preserve one full ChatGPT conversation as the baseline for the initial proof. | Accepted |
 | D-004 | One task at a time for the current MVP. | Accepted |
-| D-005 | TEST A (MCP SuperAssistant + local proxy + Desktop Commander) is the first implementation test. | Accepted; implementation validated PARTIAL by Tests 43–45 |
+| D-005 | TEST A (MCP SuperAssistant + local proxy + Desktop Commander) is the first implementation test. | Accepted; V1 PoC PASS WITH LIMITATIONS by Tests 43–46 |
 | D-006 | ChatCMD and CoS are deferred until TEST A evidence exists. | Accepted |
 | D-007 | Do not build a custom reviewer, moderator, coordinator, worker pool, or orchestration framework. | Accepted |
 | D-008 | Do not duplicate native trace, approval ledger, task timeline, or execution logs. | Accepted |
@@ -550,7 +550,7 @@ When new evidence appears:
 | Test 45 — filesystem allow-list boundary | PASS | Out-of-scope `list_directory /home/dzu/Documents` denied through the real proxy route with `Path not allowed`. |
 | Test 46 — practical coding loop | PASS | Two Python files created through MCP, four unit tests passed, exit code 0 verified, and both files read back through the same originating conversation. |
 | Gate 1 — TEST A V1 PoC acceptance | PASS WITH LIMITATIONS | Practical coding loop, filesystem boundary, manual execution, failure reporting and same-chat continuity demonstrated. Known limits are explicitly accepted; no production-hardening claim. |
-| Basic same-chat sequential continuity | PASS | Tests 43–45 performed in the originating conversation. Cross-refresh recovery is not required for V1. |
+| Basic same-chat sequential continuity | PASS | Tests 43–46 performed in the originating conversation. Cross-refresh recovery is not required for V1. |
 | Generic transport-level exactly-once | NOT PROVEN | Do not claim or build a general exactly-once layer from the fixture result. |
 | Proxy disconnect/reconnect recovery | NOT TESTED | Remains an optional follow-up if it becomes necessary for normal operation. |
 | Shell/OS isolation | NOT PROVIDED BY ALLOW-LIST | Host-level commands inherit OS-user permissions. PoC accepts reviewed, manually approved, non-destructive commands; stronger isolation is optional. |
