@@ -1107,3 +1107,14 @@ Observed:
 This result validates the fixture's local atomic idempotency mechanism only. Both invocations were launched from a single controlled host shell; they were **not** duplicate JSON-RPC requests through the MCP SuperAssistant proxy or ChatGPT UI. It therefore does not resolve Section 30's inconclusive transport-level duplicate-ID probe and does not establish exactly-once semantics for AgChat, Desktop Commander, or the proxy.
 
 Auto Execute remains OFF. No production or project data was changed.
+
+
+## 32. Duplicate invocation through ChatGPT UI — NOT EXECUTED
+
+**Date:** 28 November 2026
+
+A ChatGPT UI instruction requested two identical `desktop-commander.start_process` calls for the isolated idempotency fixture, with Auto Execute OFF. The assistant response rendered two new Run cards. Before either card was activated, subsequent page inspection showed that the two new cards were no longer present in the active DOM; only the earlier read_file card remained in the loaded conversation view.
+
+The proxy log contained no new `tools/call` entry for `agchat-idempotency-fixture.py`. The fixture attempts log remained at the two lines from Section 31's host-shell concurrency test. Therefore neither of the two intended UI-originated invocations is evidenced as executed.
+
+**Result: NOT EXECUTED / NO PASS CLAIM.** This is a UI/card persistence or conversation-view issue to investigate before repeating the test. Auto Execute remained OFF. No new fixture invocation or side effect occurred in this attempt.
