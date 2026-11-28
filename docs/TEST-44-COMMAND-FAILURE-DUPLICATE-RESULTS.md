@@ -100,8 +100,8 @@ It does **not** prove generic proxy-level exactly-once delivery or universal ded
 - The duplicate attempt did not alter the state file.
 - Test 43 proof and SQLite ledger were left untouched.
 
-## 6. Next checkpoint
+## 6. Final disposition
 
-1. Inspect the duplicate `read_process_output` result if its original session evidence remains available; do not rerun the duplicate fixture.
-2. Close any remaining same-chat continuity and boundary criteria in `TEST-A-PLAN.md`.
-3. Keep overall TEST A at PARTIAL until every required criterion is evidenced.
+The duplicate exit code 17 could not be recovered: the original Desktop Commander session expired and a later read returned `No session found for PID 126708`. The duplicate fixture was not rerun. This is an exit-status telemetry gap, not evidence of a second side effect: `DUPLICATE_BLOCKED`, `execution_count=1` and unchanged SHA-256 were independently observed.
+
+**Disposition:** fixture-level duplicate guard PASS for the agreed V1 PoC; exit-code telemetry PARTIAL. Generic transport-level exactly-once delivery remains unproven and is not claimed. Test 44 remains labelled PARTIAL to preserve this evidence limitation; TEST A V1 acceptance is PASS WITH LIMITATIONS after Tests 43–46.
