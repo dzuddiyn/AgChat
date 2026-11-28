@@ -259,7 +259,7 @@ A partial pass is useful evidence. Do not label it a full pass.
 
 **Session 2 environment and evidence (28 November 2026):** Installed Xubuntu on `dzu-miniPC`, home directory `/home/dzu`. Chrome Stable was used with MCP SuperAssistant `0.7.3`. The extension displayed `Connected · 30 tools` (Desktop Commander `25/25`, Browser `5/5`). Proxy transport: SSE; configured endpoint `http://localhost:3006/sse`; proxy listener had been verified on `127.0.0.1:3006`. The extension returned the actual schemas for `desktop-commander.write_file` and `desktop-commander.read_file`. A read-only directory listing returned `/home/dzu/AgChat-Testing/session-2` with `config.json`. The write tool created `agchat-write-test.txt` and returned `Successfully wrote to /home/dzu/AgChat-Testing/session-2/agchat-write-test.txt (1 lines)`. The read tool then returned `[Reading 1 lines from start (total: 1 lines, 0 remaining)]` followed by the exact expected content `AgChat TEST A Session 2 - WRITE PASS`. No other file was intentionally changed in this test.
 
-**Session 2 follow-up (direct RDC):** A harmless Python command emitted separate stdout/stderr markers and returned shell exit 0 (137 ms). A controlled expected failure emitted both streams and child exit 7. An exclusive-create idempotency fixture returned `EXECUTED_ONCE` on first invocation and `DUPLICATE_BLOCKED` on second; read-back confirmed `EXECUTION_COUNT=1`. This proves the fixture's guard, not automatic transport-level deduplication. Desktop Commander config was changed from `allowedDirectories: []` (unrestricted filesystem access) to `["/home/dzu/AgChat-Testing/session-2"]`. In-scope listing succeeded; listing `/home/dzu/Documents` was denied with `Path not allowed`. This allow-list constrains Desktop Commander filesystem tools, not arbitrary shell commands; it is not an OS sandbox.\n\n**Next:** Validate harmless command execution and safe retry behaviour through the MCP SuperAssistant browser-extension/proxy path itself. Do not repeat Session 1 or reinstall the bridge. Do not mark overall TEST A PASS until that evidence is captured.
+**Session 2 follow-up (direct RDC):** A harmless Python command emitted separate stdout/stderr markers and returned shell exit 0 (137 ms). A controlled expected failure emitted both streams and child exit 7. An exclusive-create idempotency fixture returned `EXECUTED_ONCE` on first invocation and `DUPLICATE_BLOCKED` on second; read-back confirmed `EXECUTION_COUNT=1`. This proves the fixture's guard, not automatic transport-level deduplication. Desktop Commander config was changed from `allowedDirectories: []` (unrestricted filesystem access) to `["/home/dzu/AgChat-Testing/session-2"]`. In-scope listing succeeded; listing `/home/dzu/Documents` was denied with `Path not allowed`. This allow-list constrains Desktop Commander filesystem tools, not arbitrary shell commands; it is not an OS sandbox.\n\n**Next:** Validate controlled command execution, expected failure reporting and a no-duplicate retry through the already-working MCP SuperAssistant extension/proxy path. Test 43 has already proven the ChatGPT → proxy → Orchestrator → Desktop Commander route; do not replay it. Do not repeat Session 1, reinstall the bridge, or recreate the browser profile.
 
 ## 14. What happens after TEST A
 
@@ -287,3 +287,21 @@ Until then, do not install ChatCMD or CoS and do not build a custom orchestratio
 The initial execution was marked FAILED due to an Orchestrator response-parser mismatch, although Desktop Commander had created the proof. The reconciliation tool independently read the existing marker through Desktop Commander and corrected the ledger without repeating the side effect. Full detail: [TEST 43 result](TEST-43-PROXY-ORCHESTRATOR-RESULTS.md).
 
 **Boundary:** This validates the exact tested route and fixed fixture. It does not prove transport-level exactly-once semantics or generic duplicate suppression. Do not upgrade overall TEST A to PASS until the remaining acceptance items are independently closed.
+
+
+## 16. Browser operating constraint and next checkpoint
+
+**Browser constraint (mandatory):** use Google Chrome with the Rdeeen profile only. The working profile clone is `/home/dzu/AgChat-Testing/session-2/chrome-user-profile-clone`, signed in as `Rdeeen@gmail.com`. Do not launch, open, focus or use Vivaldi or Firefox. Reuse the existing Chrome process and CDP endpoint `http://127.0.0.1:9222`; do not start another Chrome profile or a conflicting CDP instance. See repository `AGENTS.md` and [Development Method](AGCHAT-WORKING-METHOD.md).
+
+**Verified checkpoint:** Test 43 is PASS. The SSE proxy is listening on port 3006; the Orchestrator ledger is SUCCEEDED; the proof hash is recorded in [Test 43 results](TEST-43-PROXY-ORCHESTRATOR-RESULTS.md). Do not repeat its setup, fixture, approval or reconciliation.
+
+**Next test (Test 44 — controlled execution and failure/retry through MCP):**
+1. Use the existing Rdeeen Chrome session, extension, proxy and Xubuntu workspace.
+2. Create a separate harmless fixture under `/home/dzu/AgChat-Testing/session-2/`; do not modify the Test 43 fixture or proof.
+3. Through the originating ChatGPT conversation and SuperAssistant proxy, run a controlled expected-failure command and capture stdout, stderr and exit code.
+4. Through the same route, run an atomic one-time success fixture; capture stdout, stderr and exit code.
+5. Submit the same fixture a second time through the same route; verify it is rejected without a second side effect.
+6. Read back the fixture ledger and compare its execution count with the expected value of exactly one.
+7. Keep Auto Execute OFF and manually run each tool card. Do not infer a pass from a process-start response alone; inspect the process result and read back the fixture state.
+
+**Acceptance boundary:** Test 44 can close the controlled execution, honest failure and fixture-level duplicate/retry checks. It does not by itself prove generic transport-level exactly-once semantics. Overall TEST A remains PARTIAL until same-chat continuity and the required boundary checks are evidenced.
