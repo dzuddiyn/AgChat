@@ -1041,3 +1041,36 @@ Therefore, for this fresh read-only call:
 **Interpretation:** The patched TEST A copy now has fresh end-to-end evidence for the full result-return path after a manually initiated read-only MCP tool execution: Run → result → Auto Insert → Auto Submit → ChatGPT follow-up response. This closes the specific Auto Insert/Auto Submit acceptance gap for the patched test copy. It does not prove Auto Execute, transport-level deduplication, or compatibility of the untouched original Web Store extension.
 
 **Safety boundary:** Only the isolated TEST A extension was used. The original Web Store extension, proxy configuration and source repository were not modified by the test. Auto Execute remained OFF.
+
+
+## 30. Duplicate JSON-RPC ID probe — INCONCLUSIVE (non-mutating)
+
+**Date:** 28 November 2026  
+**Target:** Local MCP SuperAssistant proxy on `127.0.0.1:3006`. No filesystem write tool was called.
+
+### 30.1 Probe method
+
+A temporary standalone SSE client connected to `/sse`, received the endpoint event, and posted:
+1. `initialize` using protocol version `2024-11-05`.
+2. `notifications/initialized`.
+3. Two identical `tools/list` JSON-RPC requests with the same request ID `same-id-safe-probe`.
+
+Both POST requests returned HTTP **202 Accepted**. The proxy log recorded both identical requests under the same temporary session ID `7541fa9b-1c06-44f4-9638-0363f64c3a94`.
+
+### 30.2 Result and limitation
+
+The test client did not capture any matching JSON-RPC response event during the 2.5-second observation window. The proxy log recorded the forwarding of both requests but showed empty `Servers → SSE` response entries. The temporary SSE session then closed normally.
+
+**Result: INCONCLUSIVE.** This probe proves only that the proxy accepted and logged both POST requests. It does **not** prove whether the backend executed the requests once or twice, whether duplicate responses were emitted, or whether the same behavior occurs on the extension's established session. No filesystem mutation was attempted.
+
+### 30.3 Environment health after probe
+
+- Proxy process remained running as PID `85184`.
+- Port `127.0.0.1:3006` remained listening.
+- Existing test files retained their previously recorded SHA-256 hashes:
+  - `agchat-chatgpt-ui-write.txt`: `82d246dedf7c798ef06ea8ec3f71397893029bade8d7d325e9f696e77969093c`
+  - `agchat-write-after-restart.txt`: `3be7b3f8edd060c36aed8ee8ad31c786ad5a7bc35bcce791d816748c2fec7c78`
+
+### 30.4 Next safe test
+
+Do not infer deduplication guarantees from HTTP 202 or proxy log forwarding. The next valid test must use the established extension session or a correctly paired MCP client/server session and a controlled idempotency fixture. Keep Auto Execute OFF and use a harmless, isolated test target. Do not use an ordinary overwrite operation as a duplicate-side-effect test.
