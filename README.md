@@ -6,13 +6,13 @@ The operating principles are **reuse before rebuild** and **PoC first, practical
 
 ## Current direction
 
-The immediate priority is **TEST A**:
+The validated V1 baseline is **ChatGPT Chat Mode + MCP SuperAssistant + Desktop Commander**:
 
 `ChatGPT Go (same conversation) → MCP SuperAssistant browser extension → local MCP proxy → Desktop Commander → disposable local workspace`
 
 The objective is to prove that the original ChatGPT conversation can repeatedly discover and invoke local tools, read and modify files, run a controlled test, and receive verifiable results (stdout, stderr, exit code, Git status/diff) without duplicate execution or loss of conversation continuity.
 
-**Do not install or integrate ChatCMD or CoS yet.** They remain conditional evaluation candidates after TEST A produces evidence.
+**Do not install or integrate ChatCMD or CoS now.** TEST A has passed for the agreed V1 PoC scope; evaluate another runtime only if a concrete implementation task exposes a gap.
 
 ## Start here
 
@@ -42,7 +42,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 - Research and architecture direction: documented from the available project discussions and prior decisions.
 - TEST A: **PASS for the agreed V1 PoC scope, with documented limitations.** Session 0/1/2 PASS; Test 43 proxy E2E PASS; Test 44 controlled execution PASS (duplicate exit-status telemetry incomplete); Test 45 filesystem allow-list boundary PASS; Test 46 practical coding loop PASS (four unit tests, exit 0, read-back verified). Generic transport exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed.
 
-- ChatCMD / CoS: **deferred pending TEST A evidence**.
+- ChatCMD / CoS: **deferred unless the current validated workflow exposes a concrete gap**.
 - Permanent Xubuntu installation or SSD formatting: **not authorised by this documentation**; wait for an explicit user decision.
 
 ## Source of Truth policy
