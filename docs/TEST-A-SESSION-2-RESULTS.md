@@ -164,15 +164,72 @@ Result: **PASS**. Git status and diff are now operational and verified in Sessio
 | File read-back through MCP | PASS | Exact content returned. |
 | File edit through MCP | PASS | Two-line rewrite and exact read-back verified. |
 | Git status and diff | PASS | Local repository initialised; baseline `0a3027a`; status and diff exit 0; final `git diff --check` exit 0. |
-| Harmless command/test through MCP | NOT TESTED | stdout, stderr, and exit code remain to be verified. |
-| Safe failure/retry/duplicate behaviour | NOT TESTED | Remains open. |
-| Workspace boundary verification | NOT TESTED | Remains open. |
+| Harmless command/test | PASS via direct RDC; MCP SuperAssistant bridge NOT TESTED | stdout/stderr separated; shell exit 0; 137 ms. |
+| Safe expected failure | PASS via direct RDC | Python child exit code 7 and both output streams captured. |\n| Duplicate guard | PARTIAL | Fixture ran once; second invocation returned `DUPLICATE_BLOCKED`; extension/proxy transport-level retry deduplication not tested. |
+| Workspace boundary | PASS for filesystem tools | `allowedDirectories` set to session-2; in-scope listing passed; `/home/dzu/Documents` denied. Shell commands are not confined by this allow-list. |
+
+## 10. Command, expected failure, duplicate guard, and boundary checks (direct RDC)
+
+These checks were run through the Desktop Commander Remote Desktop Commander (RDC) tool on `dzu-miniPC`. They validate the host command path, but **do not yet prove command execution through the MCP SuperAssistant browser-extension/proxy bridge**.
+
+### Harmless command — PASS (direct RDC)
+
+Command executed a Python one-liner that wrote a marker to stdout and a separate marker to stderr, then exited 0.
+
+Actual output:
+```text
+STDERR_CHANNEL_PASS
+AGCHAT_SESSION2_COMMAND_PASS
+SHELL_EXIT_CODE=0
+```
+
+Timing: 137 ms. Tool timing reported separate stderr and stdout events.
+
+### Expected failure — PASS (direct RDC)
+
+A controlled Python command printed to both output channels and intentionally exited with code 7. The wrapper captured the child exit code without making the outer RDC call itself fail.
+
+Actual output:
+```text
+EXPECTED_FAILURE_STDERR
+EXPECTED_FAILURE_STDOUT
+CHILD_EXIT_CODE=7
+```
+
+Timing: 119 ms. The expected non-zero child exit code was preserved and reported.
+
+### Duplicate guard / idempotency fixture — PASS (guard behaviour only)
+
+A test command using exclusive file creation (`O_CREAT | O_EXCL`) was run twice against `agchat-idempotency-marker.txt`.
+
+- First invocation: `EXECUTED_ONCE`
+- Second invocation: `DUPLICATE_BLOCKED`
+- Read-back: `EXECUTION_COUNT=1`
+
+This demonstrates an application-level idempotency guard in the fixture. It does **not** prove that the MCP extension/proxy itself automatically deduplicates a repeated tool call. That transport-level retry behaviour remains unverified.
+
+### Workspace boundary — PASS for filesystem tools
+
+Initial Desktop Commander config had `allowedDirectories: []`, which means unrestricted filesystem access. This was corrected to:
+
+```json
+["/home/dzu/AgChat-Testing/session-2"]
+```
+
+The config was read back and confirmed. Listing the test workspace succeeded. Attempting to list `/home/dzu/Documents` was denied with:
+
+```text
+Error: Path not allowed: /home/dzu/Documents.
+Must be within one of these directories: /home/dzu/AgChat-Testing/session-2
+```
+
+This proves the Desktop Commander filesystem-tool boundary. Important limitation: this allow-list is not an OS sandbox and does not confine arbitrary shell commands launched through `start_process`. Do not treat it as protection against malicious shell commands. The Xubuntu host remains a dedicated development machine; avoid destructive commands and sensitive data.
 
 ## 10. Interpretation
 
 This session proves that the browser extension and local proxy can pass actual Desktop Commander tool calls and results between the ChatGPT conversation and the installed Xubuntu host. It also proves file creation, exact read-back, file edit, and exact edited read-back through that bridge. Git status/diff were verified locally through direct RDC after the disposable workspace was initialised as a repository.
 
-It does **not** prove the full TEST A acceptance criteria. Command execution through MCP, failure behaviour, duplicate-execution handling, and boundary verification have not yet been demonstrated.
+It does **not** prove the full TEST A acceptance criteria. Direct RDC command execution, expected-failure reporting, a fixture-level duplicate guard, and filesystem-tool boundary have been demonstrated. Command execution and retry/deduplication through the MCP SuperAssistant extension/proxy remain unverified.
 
 Session 1's direct RDC/Desktop Commander coding-loop results remain separate evidence and must not be conflated with Session 2's browser-extension/proxy bridge results.
 
