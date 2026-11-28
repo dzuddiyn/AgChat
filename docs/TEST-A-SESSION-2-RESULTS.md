@@ -1209,3 +1209,59 @@ Desktop Commander returned:
 This proves concurrent invocation delivery and application-level atomic first-writer behavior for this isolated fixture. It does **not** prove proxy-level JSON-RPC deduplication: the two requests had different JSON-RPC IDs (777 and 778), and both were intentionally delivered to the backend. It also does not establish exactly-once guarantees for arbitrary Desktop Commander operations or production applications.
 
 No project source or production data was modified.
+
+
+## 35. Duplicate JSON-RPC ID in valid SSE session — PASS (duplicate accepted and processed twice)
+
+**Date:** 28 November 2026  
+**Route:** Standalone protocol diagnostic client → valid SSE session on the running MCP SuperAssistant proxy → Desktop Commander backend.  
+**Operation:** Read-only `tools/list`; no tool mutation or filesystem write.
+
+### 35.1 Valid session establishment
+
+A dedicated diagnostic client opened `GET /sse`, received the endpoint event with its session route, and used that route for all POST messages. It completed MCP initialization and received:
+- HTTP 202 Accepted for the initialize POST.
+- An SSE initialize response with ID `agchat-duplicate-id-probe`.
+- Negotiated protocol version `2024-11-05` from the proxy's downstream server.
+
+This corrects the prior Section 30 probe, which did not establish a correctly paired session and was therefore inconclusive.
+
+### 35.2 Duplicate request test
+
+Within the same established SSE session, the client posted the identical request twice concurrently:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "agchat-duplicate-id-probe",
+  "method": "tools/list",
+  "params": {}
+}
+```
+
+Observed:
+- Both POST requests returned HTTP 202 Accepted.
+- Proxy log recorded two separate `SSE → Servers` entries with the same session ID, same JSON-RPC ID, same method and same params.
+- The client received **two separate SSE response messages**, both carrying the same JSON-RPC ID `agchat-duplicate-id-probe`.
+- Both responses contained a successful `result` (not an error).
+- `DUPLICATE_RESPONSE_COUNT=2`.
+
+### 35.3 Source-level explanation
+
+Inspected the installed proxy's `dist/gateways/sseToSse.js` and MCP SDK `SSEServerTransport.handlePostMessage()` implementation. The SSE transport validates/parses each POST and forwards each parsed message to its `onmessage` handler. The proxy handler then calls `sseClient.request(req, z.any())` for each incoming request and wraps the result using the original request ID.
+
+The MCP SDK client's `request()` implementation allocates its own internal message ID for each call. This allows both duplicate external-ID requests to be processed independently and both responses to be wrapped with the same external ID. No duplicate-ID suppression/deduplication was observed in this path.
+
+### 35.4 Result and scope
+
+**Result: PASS — duplicate JSON-RPC request accepted and processed twice.** The proxy did not reject or deduplicate the duplicate request ID in this valid SSE session. Two successful responses with the same ID were observed.
+
+This is a read-only protocol test. It does not prove that a mutating tool call would execute twice in every condition, but the inspected gateway path forwards each request independently. The application-level idempotency guard from Sections 31–34 remains important for preventing duplicate side effects.
+
+Diagnostic script:
+`/home/dzu/AgChat-Testing/session-2/duplicate-jsonrpc-valid-session.js`
+
+Script SHA-256:
+`914f43f70401bb09d675b30fdfc2eac6739f7fdcd6e8a726f2d87a93b3100bc8`
+
+Proxy remained healthy on `127.0.0.1:3006`, PID 85184. No production or project source data was modified.
