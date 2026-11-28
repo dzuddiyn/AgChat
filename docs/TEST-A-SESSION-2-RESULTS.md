@@ -542,3 +542,32 @@ Result: **PASS — post-restart proxy → Desktop Commander → start_process �
 ### Scope clarification
 
 This is a direct MCP SSE invocation after restart. It verifies the tool and result path through the proxy, but it is not evidence of a ChatGPT UI-originated `start_process` invocation. ChatGPT UI read_file after restart was separately verified in Section 18. A UI-originated start_process call remains unverified.
+
+
+## 20. Post-restart `write_file` + independent read-back — PASS
+
+**Date:** 28 November 2026  
+**Proxy:** restarted instance, `127.0.0.1:3006)  
+**Fixture:** `/home/dzu/AgChat-Testing/session-2/agchat-write-after-restart.txt`
+
+### Procedure
+
+1. Invoked `desktop-commander.write_file` through a fresh MCP SSE session (JSON-RPC ID `99203`).
+2. Wrote a dedicated three-line fixture containing `WRITE_OPERATION_PASS`.
+3. Verified the file independently on the host using `cat`, `sha256sum`, and Git status.
+4. Opened a separate fresh SSE session and invoked `desktop-commander.read_file` (JSON-RPC ID `99206`) to read the newly written file back through MCP.
+
+### Evidence
+
+- `write_file`: HTTP `202 Accepted`; result text: `Successfully wrote ... (3 lines)`.
+- Host read-back: exact three lines present.
+- SHA-256: `3be7b3f8edd060c36aed8ee8ad31c786ad5a7bc35bcce791d816748c2fec7c78`.
+- `git diff --check`: exit 0 (no whitespace errors).
+- `read_file` in a separate SSE session: HTTP `202 Accepted`; JSON-RPC result returned the exact three-line fixture including `WRITE_OPERATION_PASS`.
+- Git status showed the fixture as untracked (`?? agchat-write-after-restart.txt`), as expected for a newly created file. Existing unrelated Session 2 artifacts remained untouched by this test.
+
+Result: **PASS — post-restart write operation, host persistence, independent MCP read-back, and basic Git whitespace validation all succeeded.**
+
+### Scope
+
+This is a controlled local fixture write in the disposable Session 2 workspace. It does not verify writes from ChatGPT UI after restart, atomicity for concurrent writes, or rollback/recovery after a partial write.
