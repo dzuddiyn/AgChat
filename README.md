@@ -24,6 +24,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 - [TEST 43 — SuperAssistant proxy + Orchestrator E2E result](docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md)
 - [TEST 44 — controlled command, failure and duplicate guard](docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md)
 - [TEST 45 — workspace filesystem boundary](docs/TEST-45-WORKSPACE-BOUNDARY-RESULTS.md)
+- [TEST 46 — practical coding loop](docs/TEST-46-PRACTICAL-CODING-LOOP-RESULTS.md)
 
 ## Project boundaries
 
