@@ -31,16 +31,16 @@ The subject is **our development workflow for getting SuperAssistant working on 
 
 ### Long composer messages and text attachments
 
-A screenshot on 28 November 2026 showed a long pasted instruction represented in the ChatGPT composer as a `Teks ditampal` attachment. This is an observation only: the responsible layer (ChatGPT composer, SuperAssistant, or clipboard/browser interaction) has not yet been isolated.
+**Test 47 PASS — observed paste threshold reproduced in the current Chrome/ChatGPT session.** Clipboard paste of 9,999 ASCII characters remains inline; 10,000 characters becomes a `Teks ditampal` composer attachment. Exactly 10,000 characters inserted through the non-clipboard text-input path remains inline. This points to ChatGPT composer large-paste handling; it does not establish a SuperAssistant defect.
 
-Until investigated:
-- Keep instructions short and focused; avoid pasting unnecessarily large prompts or shell blocks.
-- Use approved file tools for large code/document payloads, then send a short instruction referencing the exact file.
-- Before acting on a composer attachment, verify the submitted message and the attachment identity/content; do not rely on a truncated preview.
-- For ambiguous submission, inspect the conversation state before resending.
-- Do not change the passing extension/proxy setup until a controlled reproduction identifies the responsible component.
+Operational rules:
+- Use a conservative ceiling of **8,000 characters** for a single clipboard paste intended to remain inline.
+- For longer instructions, use a reviewed file plus a short instruction referencing its exact path, or split the payload into smaller chunks.
+- If a `Teks ditampal` attachment appears, verify its identity and full content before acting; do not rely on the truncated preview.
+- For an ambiguous submission, inspect conversation and attachment state before resending.
+- Do not modify the passing extension/proxy setup based on this composer behaviour.
 
-Investigation and test matrix: [SUPERASSISTANT-LONG-MESSAGE-HANDLING.md](SUPERASSISTANT-LONG-MESSAGE-HANDLING.md).
+Evidence: [TEST-47-LONG-PASTE-THRESHOLD.md](TEST-47-LONG-PASTE-THRESHOLD.md). The initial investigation plan is retained at [SUPERASSISTANT-LONG-MESSAGE-HANDLING.md](SUPERASSISTANT-LONG-MESSAGE-HANDLING.md).
 
 ## 2. Working architecture
 
