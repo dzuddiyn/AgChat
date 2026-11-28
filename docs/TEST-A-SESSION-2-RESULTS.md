@@ -292,9 +292,11 @@ The result panel had success status (`exec-success`) and an OK result indicator.
 
 ## 12. Interpretation
 
-This session proves that ChatGPT UI-originated Desktop Commander tool calls can be executed by the installed Xubuntu host through MCP SuperAssistant and the local SSE proxy. The direct UI test used `desktop-commander.read_file` and returned the exact file content with a 48 ms reported execution time. Earlier file creation, read-back, and edit/read-back checks through the extension remain valid. Git status/diff were verified locally through direct RDC after the disposable workspace was initialised as a repository.
+This session proves that ChatGPT UI-originated Desktop Commander tool calls can be executed by the installed Xubuntu host through MCP SuperAssistant and the local SSE proxy. It also proves a manually mediated result-return loop: Insert queues a tool-result chip, the first Enter flushes it into the composer, and the second Enter submits it. ChatGPT then continues with a response grounded in the returned result.
 
-It does **not** prove the full TEST A acceptance criteria. Automatic result injection/assistant continuation, harmless command execution through the MCP bridge, bridge-level expected-failure reporting, and transport retry/deduplication remain unverified. The direct RDC checks for command execution and expected failure are separate evidence and must not be conflated with bridge tests.
+A harmless Python process was executed through the bridge using `desktop-commander.start_process`. It emitted distinct stdout and stderr markers and exited intentionally with code 7. `start_process` returned PID 61954 and both markers; the exact exit code was independently verified by calling `desktop-commander.read_process_output` for that PID. The result returned stdout `STDOUT_MARKER`, stderr `STDERR_MARKER`, exit code `7`, runtime `0.13s`, and process state `Completed`. This confirms command execution, output-channel capture, and non-zero exit-code verification through the MCP bridge.
+
+Remaining gaps: fully automatic result submission without operator action, transport retry/deduplication, and further boundary validation. Do not conflate direct RDC checks with bridge tests.
 
 Session 1's direct RDC/Desktop Commander coding-loop results remain separate evidence and must not be conflated with Session 2's browser-extension/proxy bridge results.
 
