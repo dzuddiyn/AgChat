@@ -1265,3 +1265,63 @@ Script SHA-256:
 `914f43f70401bb09d675b30fdfc2eac6739f7fdcd6e8a726f2d87a93b3100bc8`
 
 Proxy remained healthy on `127.0.0.1:3006`, PID 85184. No production or project source data was modified.
+
+
+## 36. Lost-response retry recovery — PASS (application-level idempotency)
+
+**Date:** 28 November 2026  
+**Route:** Diagnostic MCP SSE client → proxy → Desktop Commander `start_process` → isolated local fixture.  
+**Scenario:** First tool request accepted with HTTP 202; client deliberately closed its SSE response stream before reading the tool response; a new SSE session then retried the same operation using a new JSON-RPC request ID.
+
+### 36.1 Test setup
+
+Created isolated fixture:
+`/home/dzu/AgChat-Testing/session-2/agchat-retry-recovery-fixture.py`
+
+Operation key:
+`agchat-retry-recovery-20261128-01`
+
+The fixture appends one attempt record, waits 500 ms, then atomically creates a marker with `O_CREAT|O_EXCL`. A later invocation with the same key reports `RETRY_DUPLICATE_SUPPRESSED`.
+
+Fixture SHA-256:
+`6659d32e637ff9dfcd749a6bf10f1e6aebd7160d38d873db1a501fa2b13f0aaf`
+
+### 36.2 First attempt — response stream lost
+
+- Session initialized successfully.
+- `tools/call` for `desktop-commander.start_process` posted with ID `retry-attempt-1`.
+- Proxy returned HTTP 202 Accepted.
+- Client deliberately aborted/closed its SSE stream before reading a tool response.
+- Fixture nevertheless completed its side effect: marker records PID `107154`, effect `created_once`.
+
+The first request was therefore accepted and its side effect completed, while the client did not receive the tool result.
+
+### 36.3 Retry — new session and request ID
+
+A fresh SSE session was initialized. The same fixture command (same operation key) was called using new JSON-RPC ID `retry-attempt-2`.
+
+Observed:
+- Retry POST returned HTTP 202 Accepted.
+- Tool response was received successfully.
+- Output: `RETRY_DUPLICATE_SUPPRESSED`.
+- Attempts log contains exactly two invocation records, one for each attempt.
+- Exactly one side-effect marker exists.
+- Marker identifies the first attempt's PID `107154`.
+- Marker SHA-256:
+  `157af2622afac1abcfc5c8308b78741ce3b0cfa2c2c34493095969becea9f1f3`
+
+### 36.4 Result and scope
+
+**PASS — the fixture's application-level idempotency guard prevented a second side effect after a lost response and retry.**
+
+This test demonstrates a realistic uncertain-outcome scenario: HTTP acceptance does not mean the client received the eventual tool result. A retry can be necessary, and the operation key/atomic guard prevents duplicate effects in this fixture.
+
+It does **not** establish that the MCP proxy provides exactly-once execution, nor that every Desktop Commander operation is idempotent. The retry used a new JSON-RPC ID and a new SSE session. The protection came from the fixture's own persistent operation key and atomic marker creation.
+
+Diagnostic script:
+`/home/dzu/AgChat-Testing/session-2/agchat-retry-recovery-test.js`
+
+Script SHA-256:
+`8476ff227f6d76f474d573a38c1d59d2a7d5735eb8f3e9ff2834ed3ef2ba4160`
+
+Proxy remained healthy on `127.0.0.1:3006`, PID 85184. No production data or destructive operation was involved.
