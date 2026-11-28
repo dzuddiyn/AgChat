@@ -156,9 +156,8 @@ Session 1's direct RDC/Desktop Commander coding-loop results remain separate evi
 
 Continue in the existing workspace `/home/dzu/AgChat-Testing/session-2/`:
 
-1. Run a harmless command/test and capture stdout, stderr, and exit code.
+1. Run a harmless command/test through the MCP bridge and capture stdout, stderr, and exit code.
 2. Test one safe expected failure and check that retries do not cause duplicate execution.
 3. Assess whether the configured filesystem scope is sufficiently demonstrated.
-4. If Git evidence is required, use a known existing clone/repository workspace; do not initialise a repository in this disposable directory without explicit approval.
 
 Do not repeat successful setup or Session 1 tests. Do not label overall TEST A as PASS until the remaining acceptance criteria have evidence.
