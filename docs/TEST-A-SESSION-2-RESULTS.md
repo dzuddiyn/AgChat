@@ -166,7 +166,8 @@ Result: **PASS**. Git status and diff are now operational and verified in Sessio
 | ChatGPT UI → SuperAssistant → proxy → Desktop Commander read call | PASS | Call #9 `desktop-commander.read_file`; result success; 170 chars; 48 ms; exact three-line file content returned. |
 | Git status and diff | PASS | Local repository initialised; baseline `0a3027a`; status and diff exit 0; final `git diff --check` exit 0. |
 | Harmless command/test | PASS via MCP bridge | `desktop-commander.start_process`; stdout/stderr markers captured; PID 61954. |
-| Safe expected failure | PASS via direct RDC; bridge controlled exit-7 test PASS | Direct RDC and MCP bridge captured stdout/stderr; bridge PID 61954 exit code 7 verified by read_process_output. |\n| Workspace boundary | PASS for filesystem tools | `allowedDirectories` set to session-2; in-scope listing passed; `/home/dzu/Documents` denied. Shell commands are not confined by this allow-list. |
+| Safe expected failure | PASS via direct RDC; bridge controlled exit-7 test PASS | Direct RDC and MCP bridge captured stdout/stderr; bridge PID 61954 exit code 7 verified by read_process_output. |
+| Workspace boundary | PASS for filesystem tools | `allowedDirectories` set to session-2; in-scope listing passed; `/home/dzu/Documents` denied. Shell commands are not confined by this allow-list. |
 
 
 ### MCP bridge process execution — PASS
