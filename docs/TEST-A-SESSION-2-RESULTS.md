@@ -1687,3 +1687,48 @@ Exercise two crash windows around the side-effect boundary and verify that recov
 This is not a universal exactly-once guarantee. The reconciliation proof relies on a durable, inspectable marker that uniquely represents the fixture effect. Real adapters must provide their own idempotency key, transaction, queryable operation status, or equivalent reconciliation evidence. If the external system cannot establish whether an effect occurred, the safe state is `UNKNOWN` and human review or provider-side idempotency is required; blind retry is unsafe.
 
 The test simulates abrupt process termination, not sudden power loss, storage-controller failure, filesystem corruption, or every SQLite/filesystem durability failure mode. It is not yet wired into live ChatGPT/MCP transport or the Desktop Commander production execution path.
+
+
+## 42. Real Desktop Commander MCP tool execution — PASS (direct connector path)
+
+**Date:** 28 November 2026  
+**Target:** Isolated TEST A workspace on `dzu-miniPC`.  
+**Operation key:** `agchat-test42-real-mcp-20261128-01`
+
+### 42.1 Objective and scope
+
+Validate one harmless real Desktop Commander MCP tool execution with a durable local intent/approval/execution ledger around it.
+
+This test used the connected Desktop Commander Remote MCP tool directly from ChatGPT's tool interface. It did **not** route the call through the browser extension's MCP SuperAssistant proxy at `127.0.0.1:3006`; therefore this is not yet proof of the full ChatGPT UI → extension → proxy → orchestrator route.
+
+### 42.2 Execution
+
+1. Persisted operation intent and payload hash in SQLite.
+2. Recorded approval for this fixed, harmless test operation.
+3. Set ledger state to `RUNNING`.
+4. Invoked the actual `desktop-commander.start_process` MCP tool to create:
+   `/home/dzu/AgChat-Testing/session-2/agchat-test42-mcp-proof.txt`
+5. Tool output: `AGCHAT_TEST42_MCP_EXECUTION_PASS`.
+6. Recorded tool result and set ledger state to `SUCCEEDED`.
+7. Re-submitted the same operation to the ledger; it returned `SUCCEEDED, duplicate=true` and did not execute the MCP tool again. Proof-file SHA-256 remained unchanged.
+
+### 42.3 Evidence
+
+- Final ledger state: `SUCCEEDED`
+- Approval flag: `1`
+- Events: `INTENT_PERSISTED`, `APPROVED_FOR_FIXED_HARMLESS_TEST`, `EXECUTION_STARTED`, `SUCCEEDED`
+- Duplicate submission: `SUCCEEDED, duplicate=true`
+- Proof file SHA-256: `f0ba9fa8cbdf7b48fba156fe3d9710da59add61ca08393e10ce76e6c5285e160`
+- Ledger script SHA-256: `b18eafe710b3988e405cf1935257763b74653d63378a47cca040b9e99408fdb9`
+- SQLite ledger SHA-256: `7366b50b3855a9572fbff0ef7f1c4e0dcd99f3af8f5c1e21acf47aea7bbe304d`
+
+### 42.4 Conclusion and limitations
+
+**PASS** for a real Desktop Commander MCP tool call with a persisted intent and terminal result record, plus duplicate submission suppression at the local ledger layer.
+
+This remains a thin integration test, not a production orchestrator:
+- approval is a fixed test authorization in the fixture, not a separately authenticated approval UI;
+- ledger prepare/complete are manually sequenced around the MCP call, not yet one atomic adapter service;
+- a crash after the external effect but before ledger completion still requires tool-specific reconciliation evidence;
+- the call bypassed the SuperAssistant proxy, so proxy transport and orchestrator integration remain untested;
+- no exactly-once guarantee is claimed.
