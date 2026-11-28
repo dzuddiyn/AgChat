@@ -621,3 +621,63 @@ Three prompts were submitted in the existing ChatGPT UI conversation requesting 
 **NOT VERIFIED / BLOCKED AT TOOL-CALL GENERATION.** This is not evidence of a proxy or Desktop Commander read failure: the UI never produced a read tool call to execute. The host observation confirms file persistence only and must not be represented as an MCP read-back PASS.
 
 Next diagnostic should focus on why ChatGPT is not generating a `read_file` card in this conversation, despite the earlier successful UI-originated `write_file` card. Do not alter the proxy or extension until tool-call generation is isolated.
+
+
+## 23. AutomationService / ChatGPTAdapter source audit — BUG CONFIRMED, runtime fix not yet applied
+
+**Date:** 28 November 2026  
+**Scope:** Read-only audit of the isolated unpacked TEST A extension copy at `/home/dzu/AgChat-Testing/session-2/mcp-superassistant-extension-test/`. No extension source, proxy configuration, Chrome profile, or runtime preference was modified during this audit.
+
+### 23.1 ChatGPT adapter selector
+
+The TEST A copy's `ChatGPTAdapter` selector list already contains:
+
+```js
+button[aria-label="Hantar"]
+```
+
+alongside the English send selectors. This confirms the localized selector patch is present in the audited test copy. It does not by itself prove that the full Auto Submit automation path is running.
+
+### 23.2 Auto Insert and Auto Submit orchestration
+
+The bundled `AutomationService.handleToolExecutionComplete()` reads the preference values and follows this sequence:
+
+1. If `autoInsert` is enabled, call `handleAutoInsert()`.
+2. Only if insertion succeeds, and `autoSubmit` is also enabled, schedule submission using `scheduleCoalescedSubmit()`.
+3. The coalesced scheduler waits while MCP execution/result panels still indicate pending work, then calls `handleAutoSubmit()`.
+4. `handleAutoSubmit()` obtains the active adapter's `submitForm` method and invokes it after the configured delay and an additional 800 ms wait.
+
+The ChatGPT adapter's `submitForm()` searches its selector list, checks that the button exists, is enabled, and is visible, then calls `click()`. The service therefore has an explicit Auto Submit path; merely inserting a result into the composer is not the full expected behaviour.
+
+### 23.3 Confirmed preference-toggle defect
+
+The TEST A content bundle contains the following defect in `createToggleStateManager()`:
+
+- `setAutoInsert(value)` writes `updatePreferences({autoSubmit: value})` instead of updating `autoInsert`.
+- `getState()` reads `preferences.autoSubmit` into a shared value and returns that value for both `autoInsert` and `autoSubmit`.
+
+Consequences:
+- The popover's Auto Insert and Auto Submit controls are not independently mapped to their respective preference keys.
+- Toggling Auto Insert through this manager can overwrite the Auto Submit preference.
+- The popover can report the same state for both controls even when the stored preferences are intended to differ.
+
+The UI store's generic `updatePreferences()` method correctly merges the supplied keys; the defect is in the toggle manager passing the wrong key and reading the same key twice.
+
+### 23.4 Important distinction
+
+The AutomationService itself reads `preferences.autoInsert` and `preferences.autoSubmit` separately. Therefore the toggle-manager defect is confirmed, but it is not sufficient by itself to prove that every route for changing preferences is broken. A separate UI/settings path may write the two keys independently. Runtime preference values and the exact control used to set them must be inspected before concluding why a particular run did not submit.
+
+### 23.5 Audit outcome and next test
+
+| Item | Result |
+|---|---|
+| ChatGPT adapter includes localized `Hantar` selector in TEST A copy | PASS (source inspection) |
+| ChatGPT adapter has explicit `submitForm()` implementation | PASS (source inspection) |
+| AutomationService sequences successful Auto Insert before Auto Submit | PASS (source inspection) |
+| Scheduler waits for pending tool/result execution before submission | PASS (source inspection) |
+| Popover `setAutoInsert` writes the wrong preference key | BUG CONFIRMED |
+| Popover `getState` conflates Auto Insert and Auto Submit | BUG CONFIRMED |
+| Runtime Auto Insert/Auto Submit state after toggling controls | NOT TESTED |
+| Actual Auto Insert → Auto Submit on current test copy after this audit | NOT TESTED |
+
+**Next action:** inspect the active extension's isolated-world preference state and test the two controls independently, without changing source code. If the defect is reproduced, prepare a minimal patch in the isolated TEST A copy only, then verify separate preference values and a read-only end-to-end Auto Insert → Auto Submit run. Do not modify the original installed extension or proxy as part of this test.
