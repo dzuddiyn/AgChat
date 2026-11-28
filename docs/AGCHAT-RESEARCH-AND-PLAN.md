@@ -5,7 +5,7 @@
 **Latest roadmap audit:** 28 November 2026  
 **Repository:** https://github.com/dzuddiyn/AgChat  
 **Purpose:** Preserve the research, reasoning, accepted decisions, constraints, and implementation plan discussed for AgChat.  
-**Current status:** TEST A is PARTIAL. MCP bridge, filesystem create/read/edit, Git verification, Test 43 full proxy/Orchestrator E2E, Test 44 controlled command success/failure, Test 45 filesystem allow-list denial, and basic same-chat sequential continuity have been demonstrated. Remaining limitations are documented in Sections 16–17 and `docs/TEST-A-PLAN.md`.
+**Current status:** TEST A is PARTIAL. MCP bridge, filesystem create/read/edit, Git verification, Test 43 full proxy/Orchestrator E2E, Test 44 controlled command success/failure, Test 45 filesystem allow-list denial, and basic same-chat sequential continuity have been demonstrated. Remaining limitations are documented in Section 16 and `docs/TEST-A-PLAN.md`.
 
 ---
 
@@ -69,7 +69,7 @@ The initial scope is deliberately narrow:
 - Sequential tool calls in that same conversation.
 - A local workspace with disposable test files.
 - File read/write and Git verification.
-- Controlled command/test execution only after the security boundary is established.
+- Controlled command/test execution with explicit manual approval, disposable workspace and command-risk review; host-level PoC execution is accepted, while filesystem allow-listing is not shell isolation.
 
 The baseline is not a general-purpose multi-agent workforce. Additional worker conversations may be used in later experiments, but they do not replace the same-chat baseline.
 
@@ -342,8 +342,8 @@ From the same ChatGPT conversation:
 
 ### Session 5 — Controlled command and end-to-end continuity
 
-Only after the execution boundary is established:
-- Run a harmless command or test in the constrained environment.
+After the workspace, approval and command-risk rules are established:
+- Run a harmless command or test using the accepted host-only PoC mode (or an optional stronger boundary if justified).
 - Capture stdout, stderr and exit code.
 - Test an expected failure.
 - Test timeout/disconnection behaviour.
