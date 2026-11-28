@@ -448,3 +448,38 @@ Result: **PASS — the proxy detected the downstream stdio server closure, resta
 ### Scope and limits
 
 This verifies recovery from a downstream stdio child-process exit. It does not verify automatic replay of an in-flight tool call, recovery after browser-to-proxy SSE disconnection, or exactly-once semantics. Those remain separate behaviours and must not be inferred from this reconnect test.
+
+
+## 17. Chrome extension ↔ proxy SSE reconnect after full proxy restart — PASS (session re-established)
+
+**Date:** 28 November 2026  
+**Test extension:** `MCP SuperAssistant - AgChat TEST A 0.7.3.1`  
+**Proxy endpoint:** `http://127.0.0.1:3006/sse`
+
+### Procedure
+
+1. Confirmed the proxy was listening on port 3006 and its downstream Desktop Commander server was connected.
+2. Sent SIGTERM to the proxy process PID `47092`, leaving Chrome and its existing profile open.
+3. Verified port 3006 became closed.
+4. Restarted the proxy from the same Session 2 directory using the same `config.json`, without restarting Chrome or changing the extension.
+5. Inspected the new proxy log at `/home/dzu/AgChat-Testing/session-2/proxy-restart-test.log`.
+
+### Observed evidence
+
+- The new proxy process initialized Desktop Commander and reported 25 tools and 2 resources.
+- The new proxy log recorded new SSE connections from `127.0.0.1`.
+- A new SSE session was created: `4c3f579e-5775-4a99-a94e-dbb0919f8ec6`.
+- On that session, the extension/client sent `initialize` (protocol version `2025-11-25`), followed by `notifications/initialized`.
+- The same new session then issued repeated `resources/list`, `tools/list`, and `ping` requests. This shows that the client established a new SSE session after the proxy process restart and resumed MCP discovery/keepalive traffic.
+- Chrome was not restarted and the test extension remained installed/enabled.
+
+Result: **PASS — Chrome extension/client re-established an SSE session with the restarted proxy and resumed MCP initialization, discovery, and keepalive.**
+
+### Scope and limitations
+
+- This verifies reconnection after a full proxy process restart, not merely a downstream Desktop Commander child restart.
+- It verifies new session establishment and repeated MCP discovery/keepalive traffic. It does **not** prove that an in-flight request during the outage is replayed, nor exactly-once execution.
+- A post-reconnect tool invocation from the ChatGPT UI was not conclusively observed in this run; therefore end-to-end tool-call recovery after the restart remains **NOT VERIFIED**.
+- Automatic SSE reconnect is supported by the EventSource implementation used by the extension's SSE client. The observed new session and subsequent MCP messages are the runtime evidence for this test.
+
+**Acceptance update:** Browser/client ↔ proxy SSE session re-establishment — PASS. In-flight request replay — NOT TESTED. Post-reconnect UI tool invocation — NOT VERIFIED.
