@@ -549,6 +549,7 @@ When new evidence appears:
 | Test 44 — duplicate guard | PASS for V1 fixture guard; telemetry PARTIAL | `DUPLICATE_BLOCKED`; state count remains 1 and SHA-256 unchanged. Exit 17 cannot be recovered because the original process session no longer exists. Fixture was not rerun. |
 | Test 45 — filesystem allow-list boundary | PASS | Out-of-scope `list_directory /home/dzu/Documents` denied through the real proxy route with `Path not allowed`. |
 | Test 46 — practical coding loop | PASS | Two Python files created through MCP, four unit tests passed, exit code 0 verified, and both files read back through the same originating conversation. |
+| Test 47 — long-paste threshold | PASS | 9,999-character clipboard paste remains inline; 10,000-character paste becomes a text attachment; exact 10,000-character non-paste insertion remains inline. No payload sent; composer cleaned. |
 | Gate 1 — TEST A V1 PoC acceptance | PASS WITH LIMITATIONS | Practical coding loop, filesystem boundary, manual execution, failure reporting and same-chat continuity demonstrated. Known limits are explicitly accepted; no production-hardening claim. |
 | Basic same-chat sequential continuity | PASS | Tests 43–46 performed in the originating conversation. Cross-refresh recovery is not required for V1. |
 | Generic transport-level exactly-once | NOT PROVEN | Do not claim or build a general exactly-once layer from the fixture result. |
@@ -586,7 +587,7 @@ Test 44's duplicate exit code 17 is unavailable because Desktop Commander report
 |---|---|---|---|
 | 1 | TEST A V1 PoC gate | COMPLETE | PASS WITH LIMITATIONS; Test 46 demonstrates a complete small coding loop through the same chat. |
 | 2 | Use the current workflow for a concrete AgChat implementation task | NEXT | User-visible requirement completed with file changes, tests and reviewable Git evidence. |
-| 2A | Investigate long composer messages becoming `Teks ditampal` attachments | NEXT — workflow reliability | Identify/reproduce the responsible layer, verify payload integrity and document a safe short/large-payload method. See [investigation plan](SUPERASSISTANT-LONG-MESSAGE-HANDLING.md). |
+| 2A | Investigate long composer messages becoming `Teks ditampal` attachments | COMPLETE — Test 47 PASS | Reproduced 9,999 inline / 10,000 pasted-as-attachment; exact 10,000 non-paste text insertion remains inline. Evidence: [Test 47](TEST-47-LONG-PASTE-THRESHOLD.md). |
 | 3 | Proxy disconnect/reconnect and ambiguous-timeout recovery | CONDITIONAL | Test only if normal use reveals a reliability need; inspect original side effects before retrying. |
 | 4 | Compare ChatCMD and CoS | DEFERRED | Reopen only if a concrete gap remains that the current bridge cannot solve. |
 | 5 | Stabilise normal operation | LATER | Reproducible startup, recovery guidance, workspace policy and known limitations.
