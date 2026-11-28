@@ -10,6 +10,7 @@ These instructions apply to agents and assistants working in this repository and
 - This profile is a working clone of the Chrome profile signed in as `Rdeeen@gmail.com`; it preserves the test extension and browser session.
 - Do **not** launch, switch to, or use Vivaldi for AgChat work.
 - Do not use Firefox or another browser as a substitute.
+- If Vivaldi is already running from a pre-existing desktop session, do not interact with or focus it. Do not terminate it without explicit permission because it may contain unsaved work. Continue using the approved Rdeeen Chrome session only.
 - Before browser automation, verify the active Chrome process has the expected `--user-data-dir`, then inspect CDP targets and select the exact ChatGPT conversation.
 - CDP endpoint in the current setup: `http://127.0.0.1:9222`.
 - Do not start another Chrome instance with a conflicting debugging port or a different profile. Reuse the already-running Rdeeen profile session.
