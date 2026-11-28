@@ -586,6 +586,7 @@ Test 44's duplicate exit code 17 is unavailable because Desktop Commander report
 |---|---|---|---|
 | 1 | TEST A V1 PoC gate | COMPLETE | PASS WITH LIMITATIONS; Test 46 demonstrates a complete small coding loop through the same chat. |
 | 2 | Use the current workflow for a concrete AgChat implementation task | NEXT | User-visible requirement completed with file changes, tests and reviewable Git evidence. |
+| 2A | Investigate long composer messages becoming `Teks ditampal` attachments | NEXT — workflow reliability | Identify/reproduce the responsible layer, verify payload integrity and document a safe short/large-payload method. See [investigation plan](SUPERASSISTANT-LONG-MESSAGE-HANDLING.md). |
 | 3 | Proxy disconnect/reconnect and ambiguous-timeout recovery | CONDITIONAL | Test only if normal use reveals a reliability need; inspect original side effects before retrying. |
 | 4 | Compare ChatCMD and CoS | DEFERRED | Reopen only if a concrete gap remains that the current bridge cannot solve. |
 | 5 | Stabilise normal operation | LATER | Reproducible startup, recovery guidance, workspace policy and known limitations.
