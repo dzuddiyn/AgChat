@@ -1,7 +1,7 @@
-# AgChat Working Method — ChatGPT + RDC + CDP + Xubuntu GUI
+# AgChat Development Method — Building SuperAssistant on Xubuntu
 
 **Status:** Operational method documented from observed work on 28 November 2026.  
-**Scope:** How ChatGPT should operate the dedicated Xubuntu desktop and browser while continuing work in one originating ChatGPT conversation.  
+**Scope:** The practical method we use to develop, install, configure, test, troubleshoot and maintain MCP SuperAssistant on the Xubuntu PC. It documents how ChatGPT and the operator use RDC, CDP, desktop GUI automation, shell/process inspection and source/configuration tools to build and validate the setup. It is not a manual describing SuperAssistant's internal runtime behaviour or a general guide to using its tools.  
 **Source of Truth:** This document records the working method and verified boundaries. Test-specific results remain in `docs/TEST-A-SESSION-2-RESULTS.md`.
 
 ## 1. Operating principle
@@ -11,6 +11,23 @@
 ChatGPT should continue to inspect, plan, execute, troubleshoot, verify, and document thoroughly. The visible response should report only the useful outcome, current blocker, evidence, and next action. Avoid narrating every tool call or repeating setup already proven successful.
 
 The originating ChatGPT conversation is the control and reasoning surface. Xubuntu tools are its hands and eyes. Preserve same-chat continuity; do not move work into parallel chats to bypass provider limits, entitlements, or safety policies.
+
+### What “working method” means in this project
+
+The subject is **our development workflow for getting SuperAssistant working on Xubuntu**, not “how SuperAssistant works” as a product. The workflow covers:
+
+1. Establish and verify the Xubuntu development environment.
+2. Inspect the installed browser, extension version/ID, proxy package and MCP server configuration before changing anything.
+3. Use RDC to inspect host files, dependencies, processes, ports, logs and configuration; create backups before edits.
+4. Use CDP to inspect the actual Chrome target, extension service worker/context, page DOM and browser state. Use GUI automation for native desktop/window interactions that CDP cannot control.
+5. Make the smallest configuration or code change needed, preserving the original Web Store extension when testing an isolated unpacked copy.
+6. Restart only the affected process/service, reconnect the extension, and verify the live connection and discovered tools.
+7. Run a narrow test through the intended path, inspect both sides of each boundary, and preserve logs, hashes, screenshots and Git commits.
+8. Record what is proven, what failed, and the next checkpoint in the SoT.
+
+**Separation of concerns:** RDC/CDP/GUI are the methods and instruments we use to build and troubleshoot the Xubuntu installation. SuperAssistant extension, proxy and MCP servers are the system components being built/configured/tested. A successful RDC or CDP operation alone does not prove SuperAssistant is working; proof requires the relevant extension/proxy/MCP path to be exercised.
+
+**Communication rule:** visible replies stay short to conserve chat space; actions, verification and SoT updates remain complete. Do not narrate every tool call or repeat already-passed setup.
 
 ## 2. Working architecture
 
@@ -158,7 +175,7 @@ Underlying utilities observed in the tested setup include X11 screenshot/window/
 
 Verified GUI helper smoke checks: full desktop screenshot, window enumeration, pointer query/movement, AT-SPI application enumeration (26 app children observed), Chrome application detection, Python syntax compilation, and screenshot artifact creation all passed.
 
-## 6. MCP SuperAssistant and local proxy
+## 6. SuperAssistant components being configured (not the development method itself)
 
 The tested extension/proxy arrangement used:
 - Google Chrome Stable.
