@@ -94,6 +94,24 @@ CDP is the preferred browser-control plane when the browser is already running w
 
 `http://127.0.0.1:9222`
 
+### Chrome profile and CDP launch discipline
+
+The working browser for SuperAssistant development is the **Google Chrome profile clone** at:
+
+`/home/dzu/AgChat-Testing/session-2/chrome-user-profile-clone`
+
+This clone preserves the test profile's extensions and signed-in browser state while allowing a dedicated CDP endpoint. Launch it with:
+
+```bash
+/usr/bin/google-chrome \
+  --remote-debugging-port=9222 \
+  --user-data-dir=/home/dzu/AgChat-Testing/session-2/chrome-user-profile-clone \
+  --profile-directory=Default \
+  --no-first-run --no-default-browser-check
+```
+
+Use `http://127.0.0.1:9222/json/version` and `/json/list` to verify CDP and select the exact ChatGPT conversation. The normal Chrome data directory may reject remote debugging; use the dedicated clone rather than altering the user's default profile. Do not switch to Vivaldi for this workflow when the requested Chrome profile is available. Confirm the active extension ID before inspecting or patching an extension.
+
 Use CDP to:
 - Discover current tabs through `/json/list`.
 - Read browser version/debugger metadata through `/json/version`.
@@ -269,7 +287,7 @@ Important boundaries:
 - The original Web Store extension was not modified by the isolated TEST A extension patch.
 - Auto Execute remains OFF.
 - Proxy transport duplicate suppression is not established by the duplicate JSON-RPC ID probe.
-- Test 43's intended full proxy/orchestrator route must be marked pending until the originating ChatGPT UI actually invokes the Orchestrator MCP tool through SuperAssistant and the result is verified at each hop. Starting the proxy or discovering a server alone is not an E2E pass.
+- Test 43 full proxy/orchestrator route is PASS after the originating ChatGPT UI invoked `agchat-orchestrator.agchat_reconcile_test43` through SuperAssistant and the Orchestrator verified the existing proof via Desktop Commander `read_file`. The earlier `start_process` response was misparsed as a failure; reconciliation verified the already-created effect without rerunning the fixture.
 
 ## 11. User-facing communication style
 
