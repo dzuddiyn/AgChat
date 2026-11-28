@@ -19,6 +19,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 - [Detailed research, architecture decisions and roadmap](docs/AGCHAT-RESEARCH-AND-PLAN.md)
 - [SuperAssistant development method on Xubuntu: RDC, CDP, GUI and MCP setup](docs/AGCHAT-WORKING-METHOD.md)
 - [TEST A execution and acceptance plan](docs/TEST-A-PLAN.md)
+- [TEST 43 — SuperAssistant proxy + Orchestrator E2E result](docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md)
 
 ## Project boundaries
 
@@ -34,7 +35,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 ## Status
 
 - Research and architecture direction: documented from the available project discussions and prior decisions.
-- TEST A: **Session 0 — Xubuntu readiness: PASS; Session 1 — Disposable workspace: PASS.** Xubuntu 26.04.1 LTS is installed on the SSD and the basic toolchain is available. **Session 2 — MCP SuperAssistant extension and proxy: next.**
+- TEST A: **Session 0 — Xubuntu readiness: PASS; Session 1 — Disposable workspace: PASS.** Xubuntu 26.04.1 LTS is installed on the SSD and the basic toolchain is available. **Session 2 — MCP SuperAssistant extension/proxy and filesystem/Git loop: PASS. Test 43 — full proxy → Orchestrator → Desktop Commander E2E: PASS. Overall TEST A remains PARTIAL pending remaining boundary, retry and transport-duplicate acceptance checks.**
 - ChatCMD / CoS: **deferred pending TEST A evidence**.
 - Permanent Xubuntu installation or SSD formatting: **not authorised by this documentation**; wait for an explicit user decision.
 
