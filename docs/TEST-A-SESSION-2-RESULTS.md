@@ -1407,3 +1407,82 @@ Recovery rule:
 **Limitations:** This validates the test fixture's SQLite ledger and known marker evidence only. It does not prove crash consistency for arbitrary external side effects, distributed transactions, all Desktop Commander tools, or exactly-once MCP execution. A production design needs operation-specific evidence/adapters, durable idempotency keys, and a policy for unresolved `UNKNOWN` records.
 
 No production data, proxy process, Desktop Commander service, or project source file was modified.
+
+
+## 38. Execution Ledger state machine and concurrent worker claim — PASS (isolated SQLite fixture)
+
+**Date:** 28 November 2026  
+**Target:** Dedicated SQLite state-machine fixture in `/home/dzu/AgChat-Testing/session-2/`.  
+**Safety:** Only synthetic operation records were used. No production data, proxy process, Desktop Commander service, extension, or project source file was modified.
+
+### 38.1 State model and transition policy
+
+Created `agchat-execution-ledger-state-machine-test.py` using SQLite WAL mode and `synchronous=FULL`.
+
+States:
+- `PENDING`
+- `RUNNING`
+- `SUCCEEDED`
+- `FAILED`
+- `UNKNOWN`
+
+Allowed transitions implemented and exercised:
+- `PENDING → RUNNING`
+- `RUNNING → SUCCEEDED | FAILED | UNKNOWN`
+- `UNKNOWN → PENDING` (explicit re-arm before retry)
+- `FAILED → PENDING` (explicit re-arm before retry)
+
+The fixture rejects direct `UNKNOWN → RUNNING`, preventing an uncertain operation from being retried without an explicit re-arm. It also rejects transitions out of `SUCCEEDED`, so a late worker cannot overwrite a successful terminal state.
+
+### 38.2 Sequential state transition checks — PASS
+
+Verified:
+1. `PENDING → RUNNING` accepted (attempt 1).
+2. `RUNNING → UNKNOWN` accepted.
+3. Direct `UNKNOWN → RUNNING` rejected as `INVALID_TRANSITION`.
+4. Explicit `UNKNOWN → PENDING` accepted.
+5. `PENDING → RUNNING` accepted (attempt 2).
+6. `RUNNING → SUCCEEDED` accepted.
+7. Attempted `SUCCEEDED → RUNNING` rejected.
+
+A separate failure/retry path also passed:
+`PENDING → RUNNING → FAILED → PENDING → RUNNING → SUCCEEDED`.
+
+A late `SUCCEEDED → FAILED` update was rejected.
+
+### 38.3 Concurrent worker claim — PASS
+
+Two independent worker processes were released to claim the same `PENDING` operation at the same time. Each used a SQLite `BEGIN IMMEDIATE` transaction and a conditional state update.
+
+Observed:
+- Worker B: `WON`, claimed attempt 1.
+- Worker A: `REJECTED`, observed state `RUNNING`.
+- Worker B: completion `SUCCEEDED`.
+- Final ledger row: `SUCCEEDED`, attempt 1, worker B.
+
+Exactly one worker acquired the claim; the other was unable to claim the same operation. The final row records one attempt and one successful worker completion.
+
+### 38.4 Artifacts and integrity
+
+- Test script: `agchat-execution-ledger-state-machine-test.py`
+- Script SHA-256: `3a2cfa1f5d8735bf6c356d5c501a19129b277724be57c3a495c31a76800b0ad9`
+- SQLite ledger: `agchat-execution-ledger-state-machine.sqlite`
+- Database SHA-256: `30e6712c726c41b6734383b9642bdea3a58af2cacdc1b20bad9e20765777ceb2`
+- Result report: `agchat-execution-ledger-state-machine-result.json`
+- Result report SHA-256: `bee06917f63a01315d9705e0b1f8b257d0a0d3751af885e187697aed86f0e45e`
+
+### 38.5 Result and limitations
+
+**PASS — the fixture enforced the defined state transitions, rejected invalid/late transitions, and allowed only one of two concurrent workers to claim the same pending operation.**
+
+This supports an AgChat Execution Ledger design with:
+- an explicit transition allow-list;
+- atomic conditional worker claims;
+- attempt counters;
+- worker identity and evidence fields;
+- explicit re-arming of `UNKNOWN` or `FAILED` operations before retry;
+- immutable `SUCCEEDED` state.
+
+**Limitations:** This test validates the isolated SQLite fixture, not a production AgChat implementation. It does not yet test worker lease expiry, heartbeat/ownership fencing after a worker stalls, multi-host database access, schema migration, or atomicity between ledger updates and arbitrary external side effects. SQLite is appropriate for this single-host prototype test; production deployment topology must determine whether a different transactional store is required.
+
+No production data or shared service was modified.
