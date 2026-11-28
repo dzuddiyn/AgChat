@@ -420,3 +420,31 @@ Result: **PASS — both duplicate submissions reached downstream process executi
 - For operations with side effects, clients and tools should use application-level idempotency keys/guards and avoid assuming that a repeated JSON-RPC ID is deduplicated by this proxy.
 
 **Acceptance update:** Duplicate-request replay test — PASS (two requests forwarded; duplicate side effect blocked by fixture guard). Automatic transport retry after failure — NOT TESTED. Transport-level deduplication — NOT PRESENT / NOT OBSERVED in the inspected SSE `tools/call` path.
+
+
+## 16. Downstream stdio server disconnect and reconnect — PASS
+
+**Date:** 28 November 2026  
+**Proxy PID:** `47092`  
+**Downstream Desktop Commander before test:** PID `47214`
+
+### Procedure
+
+The proxy source was inspected before the controlled test. For stdio servers, the manager attaches an `onclose` handler; when the downstream client closes, it marks the server disconnected and schedules reconnection. The initial reconnect delay is 1 second, with exponential backoff capped at 30 seconds.
+
+A controlled SIGTERM was sent only to the proxy-owned Desktop Commander child process PID `47214`. The proxy process itself (PID `47092`) was left running.
+
+### Actual evidence
+
+- Before: proxy-owned Desktop Commander PID `47214`.
+- Action: `kill -TERM 47214`.
+- Approximately four seconds later: a replacement Desktop Commander process appeared as PID `84533`.
+- Proxy PID `47092` remained alive.
+- A fresh SSE `tools/list` request then returned **25 tools**.
+- Both `desktop-commander.read_file` and `desktop-commander.start_process` were present in the returned tool list.
+
+Result: **PASS — the proxy detected the downstream stdio server closure, restarted/reconnected its configured server, and restored tool discovery without restarting the proxy process.**
+
+### Scope and limits
+
+This verifies recovery from a downstream stdio child-process exit. It does not verify automatic replay of an in-flight tool call, recovery after browser-to-proxy SSE disconnection, or exactly-once semantics. Those remain separate behaviours and must not be inferred from this reconnect test.
