@@ -823,3 +823,75 @@ The isolated TEST A extension is currently running the patched bundle. The origi
 ### 26.5 Next diagnostic
 
 Inspect the popover injection prerequisites and extension action/popup entry point. Determine why manual injection returns without creating the container. Once the toggle controls can be rendered, verify that changing Auto Insert changes only `preferences.autoInsert`, changing Auto Submit changes only `preferences.autoSubmit`, and then run a controlled end-to-end Auto Insert → Auto Submit test.
+
+
+## 27. Xubuntu desktop GUI control PoC implemented and smoke-tested
+
+**Date:** 28 November 2026  
+**Host:** dzu-miniPC, Xubuntu 26.04.1, XFCE 4.20.4, X11 `:0.0`, 1680x1050.
+
+### 27.1 Selected approach
+
+A local, narrowly scoped GUI helper was implemented in the existing Session 2 workspace. It complements Desktop Commander rather than replacing it:
+
+- Desktop Commander remains responsible for files, processes and terminal execution.
+- `agchat-gui.py` provides X11 screenshot, window, pointer, keyboard and mouse operations.
+- AT-SPI2 provides native desktop accessibility inspection.
+- Puppeteer/CDP remains the preferred route for browser DOM and extension popover inspection.
+
+### 27.2 Installed packages
+
+Installed using apt:
+
+- `xdotool`
+- `wmctrl`
+- `scrot`
+- `xclip`
+- `python3-pyatspi`
+- `gir1.2-atspi-2.0` (already present)
+- `at-spi2-core` (already present)
+
+Enabled `org.gnome.desktop.interface toolkit-accessibility=true` for AT-SPI discovery.
+
+### 27.3 Local helper artifacts
+
+- Executable: `/home/dzu/AgChat-Testing/session-2/agchat-gui.py`
+- Documentation: `/home/dzu/AgChat-Testing/session-2/AGCHAT-GUI-CONTROL.md`
+- Screenshots: `/home/dzu/AgChat-Testing/session-2/screenshots/`
+- Final smoke screenshot: `screenshots/final-smoke.png` (1680x1050 PNG, 374002 bytes)
+
+Supported commands: `windows`, `screenshot`, `focus`, `pointer`, `move`, `click`, `type`, `key`, and `atspi`. The helper does not expose arbitrary shell passthrough. Click coordinates are bounded to the current screen size.
+
+### 27.4 Smoke test results
+
+| Test | Result |
+|---|---|
+| Capture full desktop with scrot | PASS |
+| Enumerate windows with wmctrl | PASS |
+| Move/query pointer with xdotool | PASS |
+| Enumerate desktop apps with AT-SPI2 | PASS (26 app children observed) |
+| Detect Google Chrome application via AT-SPI | PASS |
+| Python syntax compilation | PASS |
+| Screenshot final artifact | PASS |
+
+AT-SPI currently exposes Google Chrome as an application with top-level frames, but the Chromium renderer subtree was not exposed in this test. Therefore native desktop AT-SPI is available; Chrome's web content and MCP popovers should continue to be controlled through Puppeteer/CDP.
+
+### 27.5 Operational access and limits
+
+The helper is invoked through the existing authorized RDC `start_process` action, for example:
+
+```bash
+/home/dzu/AgChat-Testing/session-2/agchat-gui.py windows
+/home/dzu/AgChat-Testing/session-2/agchat-gui.py screenshot --name current
+/home/dzu/AgChat-Testing/session-2/agchat-gui.py atspi --find 'Save'
+```
+
+This is a working local GUI control path from the current ChatGPT/RDC workflow, but it is not yet a standalone MCP server with dedicated typed tools. Mouse clicks and keyboard input are real desktop actions; inspect the target window before issuing them.
+
+### 27.6 Result
+
+**PASS:** Xubuntu desktop screenshot, window discovery, pointer movement/query and AT-SPI application discovery are operational through the local helper.
+
+**PARTIAL / NOT YET VERIFIED:** Semantic interaction with Chrome renderer elements and the MCP SuperAssistant popover. Continue with Puppeteer/CDP for browser-specific UI.
+
+**Next:** Use the helper plus CDP to reopen and inspect the MCP SuperAssistant popover, then test controlled interaction with its toggles. Do not treat desktop GUI PoC completion as proof that the Auto Insert/Auto Submit defect is fixed.
