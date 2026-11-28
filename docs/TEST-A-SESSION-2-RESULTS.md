@@ -371,3 +371,52 @@ Observed UI evidence after tool completion:
 **Interpretation:** Auto Insert and Auto Submit are now verified end-to-end on the isolated patched test copy, using the user's existing Chrome profile. This does not mean the original extension has been patched or that Auto Execute is enabled. Keep the original extension untouched until the patch is reviewed and a separate adoption decision is made.
 
 The earlier Section 9 and Section 12 statements that Auto Insert/Auto Submit remained unverified are superseded by this correction for the patched test copy only. The earlier manually mediated round-trip evidence remains valid as a historical test of the original extension.
+
+
+## 15. MCP SSE duplicate-request replay test — PASS (replay accepted; no transport deduplication)
+
+**Date:** 28 November 2026  
+**Target:** Local MCP SuperAssistant proxy at `127.0.0.1:3006`, SSE transport.  
+**Safety:** One read-only request followed by a controlled synthetic process invocation. The process used an atomic `O_CREAT | O_EXCL` marker file in the disposable Session 2 workspace.
+
+### 15.1 Same JSON-RPC ID, read-only request
+
+Two identical POST requests were sent through one SSE session, both carrying JSON-RPC request ID `77123` and calling:
+
+- Tool: `desktop-commander.read_file`
+- Path: `/home/dzu/AgChat-Testing/session-2/agchat-write-test.txt`
+
+Both POSTs were accepted with HTTP `202 Accepted`. The SSE stream returned **two separate JSON-RPC responses** with ID `77123`, each containing the same three-line file content.
+
+Result: **PASS — duplicate request ID replay was accepted and two responses were emitted.** No file was modified.
+
+### 15.2 Same JSON-RPC ID, controlled side-effect guard
+
+Two identical POST requests were then sent through one SSE session, both carrying JSON-RPC request ID `77125` and invoking `desktop-commander.start_process` with the same Python command. The command attempted to create:
+
+`/home/dzu/AgChat-Testing/session-2/agchat-transport-duplicate-marker.txt`
+
+using atomic `os.open(path, O_CREAT | O_EXCL | O_WRONLY, 0o600)`.
+
+Actual results:
+
+| Item | Observed result |
+|---|---|
+| First POST | HTTP 202 Accepted |
+| Second POST with same JSON-RPC ID | HTTP 202 Accepted |
+| First tool result | PID 84188; `EXECUTED_ONCE` |
+| Second tool result | PID 84200; `DUPLICATE_BLOCKED` |
+| SSE responses | Two separate responses, both ID `77125` |
+| Marker read-back | Exactly `EXECUTED_ONCE` |
+
+Result: **PASS — both duplicate submissions reached downstream process execution; the application-level atomic guard prevented the second side effect.**
+
+### 15.3 Interpretation and limits
+
+- The proxy's SSE handler processes each incoming message with a request ID and calls `serverManager.handleRequest(msg)`; the `tools/call` branch forwards the call to the connected MCP server. No request-ID deduplication was observed in this path.
+- Replaying an identical JSON-RPC ID does **not** by itself cause the proxy to suppress the second request.
+- The atomic marker guard is application-level protection. It does not establish transport-level exactly-once execution.
+- This was a deliberate replay test, not a simulated network interruption or an automatically triggered retry. Automatic retry behaviour after connection loss, timeout, or lost response remains **NOT TESTED**.
+- For operations with side effects, clients and tools should use application-level idempotency keys/guards and avoid assuming that a repeated JSON-RPC ID is deduplicated by this proxy.
+
+**Acceptance update:** Duplicate-request replay test — PASS (two requests forwarded; duplicate side effect blocked by fixture guard). Automatic transport retry after failure — NOT TESTED. Transport-level deduplication — NOT PRESENT / NOT OBSERVED in the inspected SSE `tools/call` path.
