@@ -1118,3 +1118,44 @@ A ChatGPT UI instruction requested two identical `desktop-commander.start_proces
 The proxy log contained no new `tools/call` entry for `agchat-idempotency-fixture.py`. The fixture attempts log remained at the two lines from Section 31's host-shell concurrency test. Therefore neither of the two intended UI-originated invocations is evidenced as executed.
 
 **Result: NOT EXECUTED / NO PASS CLAIM.** This is a UI/card persistence or conversation-view issue to investigate before repeating the test. Auto Execute remained OFF. No new fixture invocation or side effect occurred in this attempt.
+
+
+## 33. ChatGPT UI duplicate tool execution — PASS (sequential, application-level guard)
+
+**Date:** 28 November 2026  
+**Route:** ChatGPT UI → MCP SuperAssistant → proxy → Desktop Commander `start_process`.
+
+### 33.1 Recovered tool-card state
+
+The two `desktop-commander.start_process` cards (call IDs 20 and 21) were present in the conversation DOM after the assistant response completed. An earlier inspection sampled the page during a transient render and reported only the previous card; a later stable DOM inspection confirmed both cards and their identical command arguments. No extension source modification was needed for this recovery.
+
+### 33.2 Manual execution with Auto Execute OFF
+
+Both cards were executed individually using their Run buttons. Each used the identical command:
+
+```sh
+python3 /home/dzu/AgChat-Testing/session-2/agchat-idempotency-fixture.py
+```
+
+Observed in proxy log:
+- Call ID 20: `desktop-commander.start_process`, JSON-RPC request ID 705.
+- Call ID 21: `desktop-commander.start_process`, JSON-RPC request ID 727.
+
+Observed Desktop Commander results:
+- Call ID 20, PID 105097: `DUPLICATE_SUPPRESSED`, completed.
+- Call ID 21, PID 105415: `DUPLICATE_SUPPRESSED`, completed.
+
+Fixture evidence:
+- Attempts log increased from 2 lines (the initial local concurrency fixture) to 4 lines after these two MCP calls.
+- Both MCP invocations appended one attempt line.
+- Exactly one marker file remained for the operation key.
+- Marker content still records the original single creation by PID 104065.
+- Marker SHA-256 unchanged: `8fd6f467248f54bbb109695b92e19cb3f55f75deb394225c9b7268ee9ede1c1a`.
+
+**Result: PASS for two sequential, UI-originated MCP tool invocations reaching Desktop Commander and being suppressed by the fixture's application-level idempotency guard.** The two invocations were separately initiated via Run, and both produced verified results.
+
+### 33.3 Scope and limitations
+
+This is not a concurrent duplicate JSON-RPC ID test and does not prove proxy-level deduplication. The MCP calls had distinct request IDs (705 and 727) and were executed sequentially. The marker already existed before both calls, so this test verifies duplicate side-effect suppression after the first creation, not first-writer behavior through MCP. The earlier Section 31 host-shell concurrency test separately verified the fixture's first-writer atomic create.
+
+Auto Execute remained OFF. No project source or production data was modified.
