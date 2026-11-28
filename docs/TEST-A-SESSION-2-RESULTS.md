@@ -1567,3 +1567,67 @@ Design implications for AgChat:
 **Limitations:** This test validates a single-host SQLite fixture with controlled timing. It does not prove distributed clock safety, multi-host database semantics, real process/network partitions, or fencing support in arbitrary external APIs and tools. Production design must use a trusted time source or database time for lease decisions and propagate fencing tokens to side-effect systems that can enforce them.
 
 No production data or shared service was modified.
+
+
+## 40. End-to-end execution orchestrator — PASS (isolated prototype fixture)
+
+**Date:** 28 November 2026  
+**Target:** Single-host Python/SQLite prototype in `/home/dzu/AgChat-Testing/session-2/`.  
+**Safety:** The adapter is deliberately fixed to create one harmless marker file. It does not execute arbitrary shell commands. No production data or shared service was modified.
+
+### 40.1 Integrated flow
+
+Implemented `agchat-e2e-orchestrator-test.py` to exercise the following path:
+
+`request submission → idempotency check → approval gate → worker claim → fenced execution → ledger completion → retry response`
+
+The SQLite prototype includes:
+- `operations` ledger with payload hash, state, approval, owner, lease, fencing token, attempt count, and result;
+- append-only event records for submission, approval, claim, success, and duplicate submission;
+- an explicit approval gate before worker claim;
+- worker claim with fencing token;
+- a fixed fixture adapter that creates a marker using exclusive file creation;
+- payload-hash conflict detection for reused operation keys;
+- cached terminal-state response for a repeated submission.
+
+### 40.2 Test sequence and results
+
+1. Submitted operation key `agchat-e2e-op-20261128-01`; accepted in `PENDING_APPROVAL`.
+2. Attempted worker claim before approval; rejected with `NOT_APPROVED_OR_NOT_PENDING`.
+3. Explicitly approved the operation; PASS.
+4. Worker `worker-e2e` claimed the operation with fencing token 1; PASS.
+5. Fixture adapter created the marker; ledger recorded `SUCCEEDED`.
+6. Simulated lost client response by deliberately discarding the first execution response.
+7. Retried the same operation key and identical payload; orchestrator returned duplicate/cached `SUCCEEDED` state without a second execution; PASS.
+8. Reused the operation key with a different payload; rejected with `IDEMPOTENCY_KEY_PAYLOAD_CONFLICT`; PASS.
+9. Attempted late execution using the old worker/token after completion; rejected with `STALE_OR_INVALID_WORKER`; PASS.
+
+### 40.3 Final evidence
+
+- Final operation state: `SUCCEEDED`
+- Approval: `1`
+- Worker: `worker-e2e`
+- Fencing token: `1`
+- Attempt count: `1`
+- Success event count: `1`
+- Marker size: 81 bytes
+- Marker SHA-256: `a560019fa0adec45072d88bc568d9407d452064accbf1388fa08b2becd1fb0d1`
+- Test script: `agchat-e2e-orchestrator-test.py`
+- Script SHA-256: `54e7828df181819f03194319f24eb731256700d5c175e4abb47e500a5db0db58`
+- SQLite database: `agchat-e2e-orchestrator.sqlite`
+- Database SHA-256: `ecb2f4f9285c3a7f77c495676dd26fced58a6f67b5df6521ad348f4c409426c3`
+- Result report: `agchat-e2e-orchestrator-result.json`
+- Report SHA-256: `2875ba028c7a4e8e4e487cd476c4855c6756373bbf3fe89d69f1558ddfd8e815`
+
+### 40.4 Conclusion and limitations
+
+**PASS —** the integrated fixture demonstrated approval gating, operation-key/payload idempotency, worker claim, fencing validation, a single successful side effect, terminal-state retry recovery, and event recording in one end-to-end flow.
+
+**Important limitations:**
+- This is a single-process, single-host prototype, not yet connected to live ChatGPT/MCP request transport or the production Desktop Commander tool adapter.
+- The lost-response simulation occurs after the ledger has committed `SUCCEEDED`. It does not simulate a crash in the critical interval after an external side effect but before ledger completion.
+- The marker adapter is a controlled fixture, not a general side-effect adapter. Arbitrary external APIs/filesystems may not support idempotency keys or fencing.
+- Lease takeover/recovery, crash-window reconciliation, and concurrent requests were validated in earlier isolated tests, but have not yet all been wired into this same orchestrator implementation.
+- Production hardening still requires transaction/recovery design for the side-effect boundary, durable approval identity/audit, request authentication, authorization policy, input validation, structured observability, and safe tool-specific adapters.
+
+No exactly-once guarantee is claimed. The demonstrated guarantee is limited to the tested fixture and its explicit state/idempotency checks.
