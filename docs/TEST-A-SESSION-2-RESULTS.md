@@ -1631,3 +1631,59 @@ The SQLite prototype includes:
 - Production hardening still requires transaction/recovery design for the side-effect boundary, durable approval identity/audit, request authentication, authorization policy, input validation, structured observability, and safe tool-specific adapters.
 
 No exactly-once guarantee is claimed. The demonstrated guarantee is limited to the tested fixture and its explicit state/idempotency checks.
+
+
+## 41. Crash-safe side-effect recovery — PASS (controlled crash-window fixture)
+
+**Date:** 28 November 2026  
+**Target:** Isolated Python/SQLite WAL fixture on `dzu-miniPC`, under `/home/dzu/AgChat-Testing/session-2/`.  
+**Safety:** The side-effect adapter is fixed and creates only one harmless marker file. No arbitrary shell command or production data is involved.
+
+### 41.1 Objective
+
+Exercise two crash windows around the side-effect boundary and verify that recovery consults durable state plus observable effect evidence before deciding whether to retry.
+
+### 41.2 Case A — Crash before side effect
+
+- Worker claims the operation and durably records `RUNNING`, owner and fencing token 1.
+- Child process terminates abruptly with exit code 71 before creating the marker.
+- After restart, ledger state is `RUNNING` and marker is absent.
+- Recovery records `RECONCILED_NO_EFFECT_REARMED` and returns the operation to `PENDING`.
+- Recovery worker claims with fencing token 2 and creates the marker once.
+- Final state: `SUCCEEDED`; one terminal success event.
+
+**Result: PASS** — retry occurred only after the fixture confirmed the marker was absent.
+
+### 41.3 Case B — Crash after side effect, before ledger completion
+
+- Worker claims with fencing token 1.
+- Fixed adapter creates and fsyncs the marker and its containing directory.
+- Child process terminates abruptly with exit code 72 before writing `SUCCEEDED` to the ledger.
+- After restart, ledger state is `RUNNING`, but the marker exists.
+- Recovery verifies the marker and records `RECONCILED_SUCCEEDED_FROM_EFFECT_EVIDENCE`.
+- No second adapter execution occurs.
+- Final state: `SUCCEEDED`; one reconciliation-success event.
+
+**Result: PASS** — existing effect was reconciled without re-execution.
+
+### 41.4 Evidence
+
+- Operation key: `agchat-crash-safe-recovery-20261128-01`
+- Payload SHA-256: `14763ac613e4bf10db968a05e670da0a7a2fe6f435a8a5e59a87253926a3230a`
+- Test script: `agchat-crash-safe-recovery-test.py`
+- Script SHA-256: `288aede579ea7089d4de833e4d72d9c4b85f8905565aaba745c4eb5c37883e14`
+- SQLite DB SHA-256: `194afac0a89dbb47d5d9eec5f0a4da87346df252f2a4e94f81a56f11171ff2e8`
+- Marker: 68 bytes
+- Marker SHA-256: `b10f360cc057c5b6d1546e81271357a1ca976e347b3d5f911b3d0ef18398505a`
+- Result report: `agchat-crash-safe-recovery-result.json`
+- Report SHA-256: `42773a3498196051aff5dfc058ff1ff4d154604e5bd102e802a9f81495213032`
+
+### 41.5 Conclusion and limitations
+
+**PASS —** both controlled crash windows recovered as designed in the isolated fixture:
+- before-effect crash → verify no marker → explicit re-arm and execute once;
+- after-effect crash → verify marker → reconcile success without executing again.
+
+This is not a universal exactly-once guarantee. The reconciliation proof relies on a durable, inspectable marker that uniquely represents the fixture effect. Real adapters must provide their own idempotency key, transaction, queryable operation status, or equivalent reconciliation evidence. If the external system cannot establish whether an effect occurred, the safe state is `UNKNOWN` and human review or provider-side idempotency is required; blind retry is unsafe.
+
+The test simulates abrupt process termination, not sudden power loss, storage-controller failure, filesystem corruption, or every SQLite/filesystem durability failure mode. It is not yet wired into live ChatGPT/MCP transport or the Desktop Commander production execution path.
