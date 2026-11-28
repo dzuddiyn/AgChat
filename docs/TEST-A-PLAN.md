@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant extension and proxy: PENDING (resume after permanent Xubuntu installation and basic setup).  
+**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant extension and proxy: NEXT.  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -71,6 +71,22 @@ Record:
 - Whether the current session survives reboot.
 
 **Exit condition:** Environment and persistence status are known. If this is a normal Live USB without persistence, proceed only with a temporary proof and avoid unnecessary package installation.
+
+
+**Session 0 result: PASS — installed Xubuntu environment verified on 28 November 2026.**
+
+- OS: Ubuntu 26.04.1 LTS (Resolute Raccoon), Xfce 4.20.4; session identifies as Xubuntu.
+- Boot/install mode: installed system; root filesystem is on internal SSD `/dev/sda2`.
+- Internal SSD: 119.2 GB disk; root filesystem 116 GB total, 94 GB available at inspection.
+- Memory: 11 GiB RAM; 4 GiB swap.
+- CPU architecture: x86_64.
+- Browser: Firefox at `/usr/bin/firefox`.
+- Toolchain: Git 2.53.0, Node.js v24.22.3, npm 11.19.1, Python 3.14.4.
+- Network interface `eno1` is up with an assigned IPv4 address.
+- Desktop Commander Remote device `dzu-miniPC` is online.
+- Additional storage detected: 1 TB internal HDD, 2 TB external drive, and 58.6 GB USB drive.
+
+The old Live USB workspace is not present in the new installation. Session 1's result is retained in the repository; do not repeat its coding-loop tests. A fresh disposable workspace may be recreated when needed for bridge validation.
 
 ## 5. Phase 1 — Disposable workspace
 
