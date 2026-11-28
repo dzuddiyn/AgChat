@@ -1159,3 +1159,53 @@ Fixture evidence:
 This is not a concurrent duplicate JSON-RPC ID test and does not prove proxy-level deduplication. The MCP calls had distinct request IDs (705 and 727) and were executed sequentially. The marker already existed before both calls, so this test verifies duplicate side-effect suppression after the first creation, not first-writer behavior through MCP. The earlier Section 31 host-shell concurrency test separately verified the fixture's first-writer atomic create.
 
 Auto Execute remained OFF. No project source or production data was modified.
+
+
+## 34. Concurrent invocation through ChatGPT UI — PASS (fixture-level atomic first-writer)
+
+**Date:** 28 November 2026  
+**Route:** ChatGPT UI → MCP SuperAssistant → proxy → Desktop Commander `start_process`.  
+**Auto Execute:** OFF. Both Run buttons were triggered programmatically through the test browser at nearly the same time; no fixture was invoked through a direct shell command by the operator.
+
+### 34.1 Isolated fixture
+
+Created `agchat-concurrent-fixture.py` and a fresh operation key:
+`agchat-concurrent-op-20261128-01`.
+
+The fixture appends one timestamped record per invocation, waits 350 ms to create an overlap window, then attempts to create one marker using `O_CREAT | O_EXCL`. The first process to acquire the exclusive create writes the marker; the other reports `DUPLICATE_SUPPRESSED`.
+
+### 34.2 UI and transport evidence
+
+Two distinct ChatGPT tool cards were present:
+- Call ID #22, JSON-RPC request ID 777.
+- Call ID #23, JSON-RPC request ID 778.
+
+Both cards used the identical command:
+`python3 /home/dzu/AgChat-Testing/session-2/agchat-concurrent-fixture.py`.
+
+The two Run actions were triggered in one browser evaluation, without waiting for the first to finish.
+
+Proxy log confirms two separate `tools/call` requests:
+- Request 777 → `desktop-commander.start_process`.
+- Request 778 → `desktop-commander.start_process`.
+
+Desktop Commander returned:
+- Call #22, PID 105913: `SIDE_EFFECT_CREATED`.
+- Call #23, PID 105924: `DUPLICATE_SUPPRESSED`.
+
+### 34.3 Fixture evidence
+
+- Attempts log contains exactly 2 records.
+- Recorded invocation timestamps differ by approximately 5.24 ms, confirming near-simultaneous fixture entry.
+- Exactly 1 marker exists for the operation key.
+- Marker content records the winning process PID 105913 and effect `created_once`.
+- Marker size: 127 bytes; mode: 0600.
+- Marker SHA-256: `3add93e3d7309637e56f31bc1ba4fc16e77fe87ad82a144d53ceb9ffd2068cc6`.
+
+**Result: PASS.** Two separate, near-simultaneous MCP tool invocations reached Desktop Commander. Both entered the fixture, but the atomic exclusive-create guard allowed exactly one side effect. The second invocation was suppressed.
+
+### 34.4 Scope and limitations
+
+This proves concurrent invocation delivery and application-level atomic first-writer behavior for this isolated fixture. It does **not** prove proxy-level JSON-RPC deduplication: the two requests had different JSON-RPC IDs (777 and 778), and both were intentionally delivered to the backend. It also does not establish exactly-once guarantees for arbitrary Desktop Commander operations or production applications.
+
+No project source or production data was modified.
