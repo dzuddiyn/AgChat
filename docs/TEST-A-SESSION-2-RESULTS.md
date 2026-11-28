@@ -895,3 +895,88 @@ This is a working local GUI control path from the current ChatGPT/RDC workflow, 
 **PARTIAL / NOT YET VERIFIED:** Semantic interaction with Chrome renderer elements and the MCP SuperAssistant popover. Continue with Puppeteer/CDP for browser-specific UI.
 
 **Next:** Use the helper plus CDP to reopen and inspect the MCP SuperAssistant popover, then test controlled interaction with its toggles. Do not treat desktop GUI PoC completion as proof that the Auto Insert/Auto Submit defect is fixed.
+
+## 28. MCP SuperAssistant ChatGPT popover restored and toggle UI verified
+
+**Date:** 28 November 2026  
+**Target:** Isolated unpacked TEST A extension only (ccmhmhnpkjkdcdggbcafbhkmeekcgeoo). The original Web Store extension remains untouched.
+
+### 28.1 Root cause of missing popover
+
+The active ChatGPTAdapter.findButtonInsertionPoint() still searched legacy selectors:
+- [data-testid="composer-plus-btn"]
+- English button[aria-label^="Add files"]
+- [grid-area="leading"]
+- legacy composer footer selectors
+
+The current ChatGPT composer instead exposes:
+- [data-composer-leading-controls]
+- localized plus button button[aria-label="Tambah fail dan banyak lagi"]
+- send button button[aria-label="Hantar"]
+
+The adapter was active, but its insertion-point lookup returned null; consequently the popover React component was never mounted.
+
+### 28.2 Persistent TEST A source patch
+
+Updated only the ChatGPT adapter's findButtonInsertionPoint() method in:
+
+/home/dzu/AgChat-Testing/session-2/mcp-superassistant-extension-test/content/index.iife.js
+
+The patched method now locates [data-composer-leading-controls] and inserts the MCP popover immediately after the localized plus button, with a fallback to the same leading-controls container.
+
+- Previous candidate bundle SHA-256: 87a3f4e5e5c529b405e60296cf758cc6ae463989c50f37a391869fc046858296
+- Updated bundle SHA-256: 1766c30b49ce0f1afecbb2288706ab202080a4b428e38f4b12196952594ca31a
+- Pre-selector-fix backup: content/index.iife.js.pre-dom-selector-fix
+- node --check: PASS
+
+Only the TEST A extension was reloaded. The ChatGPT page was reloaded afterward to create a fresh isolated content-script context. The existing unsent composer draft was backed up and verified unchanged after the page reload.
+
+### 28.3 Automatic popover injection after reload — PASS
+
+After reloading TEST A and ChatGPT:
+- TEST A isolated execution context was recreated.
+- ChatGPTAdapter was active.
+- findButtonInsertionPoint() returned a valid insertion point.
+- #mcp-popover-container was present without a runtime monkey-patch.
+- The MCP button was rendered beside the current ChatGPT composer plus button.
+- The button's image source resolved to the TEST A extension ID.
+
+This confirms the selector correction is persistent in the unpacked TEST A bundle, not merely a temporary CDP override.
+
+### 28.4 Popover and sidebar UI control — PASS
+
+The MCP button opens the settings popover. The popover contains four independent controls:
+- MCP
+- Auto Insert
+- Auto Submit
+- Auto Execute
+
+The sidebar was also expanded and its Settings tab inspected. The sidebar settings expose automation delays; the actual enable/disable switches are in the MCP button popover.
+
+### 28.5 Independent toggle tests — PASS
+
+The UI controls were operated in the browser and the extension's isolated-world runtime state plus UI-store preferences were read after each change.
+
+| Action | Runtime state | UI-store preference | Result |
+|---|---|---|---|
+| Initial | Insert=true, Submit=true, Execute=false | Insert=true, Submit=true | PASS |
+| Auto Insert OFF | Insert=false, Submit=true | Insert=false, Submit=true | PASS |
+| Auto Insert ON | Insert=true, Submit=true | Insert=true, Submit=true | PASS |
+| Auto Submit OFF | Insert=true, Submit=false | Insert=true, Submit=false | PASS |
+| Auto Submit ON | Insert=true, Submit=true | Insert=true, Submit=true | PASS |
+
+The Auto Submit control was enabled while Auto Insert remained ON. The two preferences changed independently; neither overwrote the other.
+
+Final state was restored to:
+- MCP: ON
+- Auto Insert: ON
+- Auto Submit: ON
+- Auto Execute: OFF
+
+### 28.6 Final result and scope
+
+**PASS:** The ChatGPT MCP popover is automatically injected after a page/extension reload in the patched TEST A copy. The popover can be opened and controlled. Auto Insert and Auto Submit switches operate independently, update the persisted UI-store preferences, and update the live automation state. The original values were restored.
+
+**NOT YET CLAIMED:** This section verifies UI injection and toggle state only. It does not by itself constitute a new end-to-end tool-result Auto Insert → Auto Submit test after the selector patch. That acceptance item remains separate.
+
+**Safety boundary:** The original installed Web Store extension (kngiafgkdnlkgmefdafaibkibegkcaef) was not modified. Proxy configuration was not changed. Auto Execute remained OFF.
