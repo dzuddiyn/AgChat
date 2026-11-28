@@ -311,7 +311,7 @@ The initial execution was marked FAILED due to an Orchestrator response-parser m
 - All tool cards were run manually; Auto Execute remained OFF.
 - Test 43 setup and fixture were not repeated or modified.
 
-**Current next action:** inspect the existing duplicate process-output result if available, without rerunning the fixture. Then complete any remaining boundary and continuity checks. Overall TEST A remains PARTIAL; do not claim generic transport-level exactly-once semantics from a fixture-level exclusive-create guard.
+**Final disposition:** the original duplicate process session expired and a later read returned `No session found for PID 126708`. Do not rerun the fixture. `DUPLICATE_BLOCKED`, state count 1 and unchanged SHA-256 establish the fixture-level no-second-side-effect guard; exit-code telemetry remains incomplete. Generic transport-level exactly-once is not claimed or required for V1.
 
 
 ## 18. Test 45 — workspace filesystem boundary
