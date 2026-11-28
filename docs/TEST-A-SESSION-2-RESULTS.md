@@ -483,3 +483,36 @@ Result: **PASS — Chrome extension/client re-established an SSE session with th
 - Automatic SSE reconnect is supported by the EventSource implementation used by the extension's SSE client. The observed new session and subsequent MCP messages are the runtime evidence for this test.
 
 **Acceptance update:** Browser/client ↔ proxy SSE session re-establishment — PASS. In-flight request replay — NOT TESTED. Post-reconnect UI tool invocation — NOT VERIFIED.
+
+
+## 18. Correction — post-restart ChatGPT UI tool call verified PASS
+
+**Date:** 28 November 2026
+
+Section 17 initially stated that the post-reconnect UI tool invocation was not verified. A subsequent inspection of the active ChatGPT conversation confirmed that the tool card had completed successfully and ChatGPT had received the actual file contents.
+
+### Evidence
+
+- ChatGPT conversation: `6b0a6dd3-8a04-83ec-b94b-71e72d826121`
+- Tool: `desktop-commander.read_file`
+- Target: `/home/dzu/AgChat-Testing/session-2/agchat-write-test.txt`
+- ChatGPT UI displayed the MCP tool card as completed, with a result payload (170 chars, 39 ms).
+- ChatGPT's subsequent assistant response reproduced the three lines returned from Xubuntu and reported the MCP invocation, Desktop Commander response, file access, and result-return as PASS.
+- Composer was empty after the assistant response.
+- File remained read-only and unchanged.
+- Independent direct SSE verification after restart also returned JSON-RPC ID `99201` with the same three-line file content.
+
+### Corrected acceptance status
+
+| Check | Corrected result |
+|---|---|
+| Proxy process restart | PASS |
+| New extension/client SSE session | PASS |
+| MCP initialize + discovery + keepalive | PASS |
+| Post-restart ChatGPT UI tool invocation | PASS |
+| Desktop Commander read_file result-return | PASS |
+| File integrity (read-only) | PASS |
+| In-flight request replay across restart | NOT TESTED |
+| Exactly-once execution across restart | NOT TESTED |
+
+**Correction:** The earlier "post-reconnect UI tool invocation — NOT VERIFIED" statement in Section 17 is superseded by this Section 18. The end-to-end read-only tool path is now verified after a full proxy restart. This does not establish replay or exactly-once semantics for an in-flight side-effecting operation.
