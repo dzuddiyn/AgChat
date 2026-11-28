@@ -31,7 +31,9 @@ Detailed procedure: [docs/AGCHAT-WORKING-METHOD.md](docs/AGCHAT-WORKING-METHOD.m
 
 - Do not repeat setup or tests already marked PASS unless new evidence invalidates them.
 - Current verified milestone: **Test 43 PASS** — ChatGPT → SuperAssistant → SSE proxy → AgChat Orchestrator → Desktop Commander.
+- **Test 44 PARTIAL** — controlled failure (exit 7) and success (exit 0) verified through the same MCP route; duplicate guard output and state count 1 verified, duplicate exit 17 not yet captured.
 - Test 43 evidence: [docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md](docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md).
+- Test 44 evidence: [docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md](docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md).
 - Overall TEST A remains PARTIAL. Continue with the first outstanding acceptance item in [docs/TEST-A-PLAN.md](docs/TEST-A-PLAN.md), not with browser installation or Test 43 replay.
 - Inspect current process, port, ledger and file state before any side-effecting action. Never rerun a fixture because a response is delayed or ambiguous; inspect its original PID, output, ledger and proof first.
 
