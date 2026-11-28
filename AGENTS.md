@@ -30,11 +30,11 @@ Detailed procedure: [docs/AGCHAT-WORKING-METHOD.md](docs/AGCHAT-WORKING-METHOD.m
 
 ## 2A. Long-message handling
 
-- A 28 November 2026 screenshot showed a long pasted prompt represented in the ChatGPT composer as a `Teks ditampal` attachment.
-- The responsible layer is not yet identified; do not assume it is a SuperAssistant defect.
-- Follow [docs/SUPERASSISTANT-LONG-MESSAGE-HANDLING.md](docs/SUPERASSISTANT-LONG-MESSAGE-HANDLING.md) before changing the extension or proxy.
-- Until tested, keep instructions concise; use approved file tools for large payloads; verify attachment content before acting on it.
-- Do not blindly resend an ambiguous long-message submission.
+- **Test 47 PASS:** ChatGPT composer converts clipboard-pasted ASCII payloads at 10,000 characters into a `Teks ditampal` attachment; 9,999 remains inline.
+- Exactly 10,000 characters inserted through the non-clipboard text-input path remained inline. Evidence narrows the behaviour to large-paste handling in the ChatGPT composer; do not attribute it to SuperAssistant without new evidence.
+- Use a conservative inline-paste ceiling of 8,000 characters. For larger payloads, use a reviewed file and a short path-based instruction, or split the content.
+- Verify attachment identity/completeness before acting; never rely on a truncated preview or blindly resend an ambiguous submission.
+- Full evidence: [docs/TEST-47-LONG-PASTE-THRESHOLD.md](docs/TEST-47-LONG-PASTE-THRESHOLD.md).
 
 ## 3. Continue from verified checkpoints
 
