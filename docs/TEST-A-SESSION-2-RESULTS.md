@@ -168,7 +168,7 @@ Result: **PASS**. Git status and diff are now operational and verified in Sessio
 | Harmless command/test | PASS via MCP bridge | `desktop-commander.start_process`; stdout/stderr markers captured; PID 61954. |
 | Safe expected failure | PASS via direct RDC; bridge controlled exit-7 test PASS | Direct RDC and MCP bridge captured stdout/stderr; bridge PID 61954 exit code 7 verified by read_process_output. |
 | Workspace boundary | PASS for filesystem tools | `allowedDirectories` set to session-2; in-scope listing passed; `/home/dzu/Documents` denied. Shell commands are not confined by this allow-list. |
-| Auto Insert + Auto Submit | FAIL / NOT VERIFIED | Preferences persisted as ON, but after actual successful `read_file` execution the result panel still showed Insert; no automatic result submission occurred. `window.__mcpAutomationState` remained null after reload, indicating AutomationService state was not exposed/initialized in the active ChatGPT page. |
+| Auto Insert + Auto Submit (original v0.7.3) | FAIL | On the original extension, the localized ChatGPT send button (`aria-label="Hantar"`) was not included in the submit selector; result was inserted but not submitted. |
 
 
 ### MCP bridge process execution — PASS
@@ -311,3 +311,63 @@ Continue in the existing workspace `/home/dzu/AgChat-Testing/session-2/`:
 4. Assess whether the configured filesystem scope is sufficiently demonstrated.
 
 Do not repeat successful setup or Session 1 tests. Do not label overall TEST A as PASS until the remaining acceptance criteria have evidence.
+
+
+## 14. Correction and final automation verification — PASS (patched test copy)
+
+**Correction date:** 28 November 2026
+
+The earlier observation that `window.__mcpAutomationState` was null in the page's default JavaScript world was not valid evidence of extension-service failure. The content script runs in an isolated extension execution world. After inspecting the correct isolated context, the test extension was confirmed to have:
+
+- `autoInsert=true`
+- `autoSubmit=true`
+- `autoExecute=false`
+- Active `mcpAdapter` and `mcpClient`
+- Submit selector including `button[aria-label="Hantar"]`
+
+### Root cause confirmed
+
+The original extension's `ChatGPTAdapter` submit selector included English labels such as `Send`, but the active ChatGPT UI is localized and exposes the submit button as `button[aria-label="Hantar"]`. The selector did not match that button. A one-selector patch was prepared in a separate unpacked test copy. The original installed extension was not modified.
+
+### Patched test extension
+
+- Display name: `MCP SuperAssistant - AgChat TEST A`
+- Version: `0.7.3.1`
+- Extension ID: `ccmhmhnpkjkdcdggbcafbhkmeekcgeoo`
+- Test copy directory: `/home/dzu/AgChat-Testing/session-2/mcp-superassistant-extension-test/`
+- Original extension ID remains: `kngiafgkdnlkgmefdafaibkibegkcaef`
+- Existing Chrome profile was retained; no new profile was created.
+- The patched selector was verified in the extension isolated execution context.
+
+### End-to-end result-return test — PASS
+
+A new ChatGPT-originated call was generated and the MCP card's **Run** action was activated once to execute the read-only tool. No Insert action or manual Send/Hantar action was performed.
+
+- Tool: `desktop-commander.read_file`
+- Call ID: `16`
+- Path: `/home/dzu/AgChat-Testing/session-2/agchat-write-test.txt`
+- Returned content:
+  ```text
+  AgChat TEST A Session 2 - EDIT PASS
+  MCP file edit and read-back verification.
+  Git verification fixture change.
+  ```
+
+Observed UI evidence after tool completion:
+1. The function result payload was automatically placed in the ChatGPT composer — **Auto Insert PASS**.
+2. After the automation delay, the composer became empty and ChatGPT displayed a new assistant response containing the returned file contents — **Auto Submit PASS**.
+3. No operator Insert click or manual message submission was used.
+4. The operation was read-only; the fixture file was not changed.
+
+### Updated acceptance status
+
+| Check | Result | Evidence |
+|---|---|---|
+| Auto Insert (patched test copy) | PASS | Function result call ID 16 appeared in the composer without operator Insert action. |
+| Auto Submit (patched test copy) | PASS | Composer emptied and ChatGPT produced a subsequent assistant response without operator Send/Hantar action. |
+| Original extension compatibility | FAIL until patch is adopted | Original selector lacks the localized `Hantar` selector; original extension was left unchanged. |
+| Auto Execute | OFF / NOT TESTED | Preference remained false; no automatic execution of tool cards was enabled. |
+
+**Interpretation:** Auto Insert and Auto Submit are now verified end-to-end on the isolated patched test copy, using the user's existing Chrome profile. This does not mean the original extension has been patched or that Auto Execute is enabled. Keep the original extension untouched until the patch is reviewed and a separate adoption decision is made.
+
+The earlier Section 9 and Section 12 statements that Auto Insert/Auto Submit remained unverified are superseded by this correction for the patched test copy only. The earlier manually mediated round-trip evidence remains valid as a historical test of the original extension.
