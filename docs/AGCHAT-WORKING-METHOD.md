@@ -291,6 +291,7 @@ Verified working capabilities from the recorded sessions:
 - Test 44 controlled command/failure/duplicate test through the same ChatGPT → SuperAssistant → proxy → Desktop Commander route: expected failure exit 7 and success exit 0 verified; duplicate guard returned `DUPLICATE_BLOCKED` and state count remained 1, while duplicate exit 17 remains unverified. Auto Execute remained OFF.
 - Test 44 controlled command/failure/duplicate test through the same ChatGPT → SuperAssistant → proxy → Desktop Commander route: expected failure exit 7 and success exit 0 verified; duplicate guard returned `DUPLICATE_BLOCKED` and state count remained 1, while duplicate exit 17 remains unverified. Auto Execute remained OFF.
 - Test 45 filesystem boundary through the same originating ChatGPT/SuperAssistant/proxy route: `desktop-commander.list_directory` for `/home/dzu/Documents` was denied with `Path not allowed`; confirms filesystem allow-list enforcement only, not shell isolation. Auto Execute remained OFF.
+- Test 46 practical coding loop through the same route: created a Python transaction helper and four unit tests, ran all four successfully (exit 0), then read back both files; targeted Git status and SHA-256 were recorded. Auto Execute remained OFF.
 
 Important boundaries:
 - Test 42 was a direct Desktop Commander connector call, not ChatGPT → SuperAssistant proxy → Orchestrator → Desktop Commander E2E.
