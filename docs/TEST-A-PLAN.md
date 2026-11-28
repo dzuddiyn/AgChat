@@ -173,22 +173,23 @@ Also test one expected failure, such as a harmless invalid test target, to confi
 
 ## 10. Phase 6 — Same-chat continuity and failure behaviour
 
-Within the same ChatGPT conversation:
-1. Ask for a file read.
-2. Ask for a file creation.
-3. Ask for a file edit.
-4. Ask for Git verification.
-5. Ask for the controlled test.
-6. Ask the model to interpret the evidence and propose the next action.
+**Result: PASS for the agreed V1 PoC scope.** Tests 43–46 were performed in the same originating ChatGPT conversation. The sequence includes proxy E2E reconciliation, controlled expected failure, successful process execution, fixture-level duplicate rejection, filesystem boundary denial, and a practical coding task with four passing unit tests and source read-back.
 
-Test:
-- Proxy disconnect/reconnect.
-- A harmless timeout or failed operation.
-- A repeated request where the first call may already have completed.
-- Whether one request causes more than one execution.
-- Whether the returned result is associated with the correct tool request.
+Verified:
+- Sequential tool calls remain in the original conversation.
+- Expected non-zero exit status and stderr/stdout are returned honestly.
+- Successful process exit code 0 is returned and verified.
+- The fixture-level duplicate guard prevents a second side effect.
+- The returned results are visible in the originating conversation.
 
-**Exit condition:** Sequential calls remain in the original conversation, failures are explicit, and duplicate execution is not observed.
+Not required for V1:
+- Proxy disconnect/reconnect recovery.
+- Cross-refresh/session recovery.
+- Generic transport-level exactly-once semantics.
+
+If a future task requires reconnect recovery, inspect the original request/process and resulting state before retrying an ambiguous operation.
+
+**Exit condition: PASS WITH LIMITATIONS** for the agreed V1 PoC scope.
 
 ## 11. Evidence template
 
