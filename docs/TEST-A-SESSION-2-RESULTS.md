@@ -151,7 +151,7 @@ DIFF_EXIT_CODE=0
 The tracked fixture change is visible exactly as expected. The two untracked files (`agchat-single-execution-marker.txt` and `config.json`) were deliberately left untracked and were not committed. A final `git diff --check` returned exit code 0.
 
 Result: **PASS**. Git status and diff are now operational and verified in Session 2.
- 
+
 ## 9. Acceptance results
 
 | Check | Result | Evidence |
@@ -165,9 +165,38 @@ Result: **PASS**. Git status and diff are now operational and verified in Sessio
 | File edit through MCP | PASS | Two-line rewrite and exact read-back verified. |
 | ChatGPT UI → SuperAssistant → proxy → Desktop Commander read call | PASS | Call #9 `desktop-commander.read_file`; result success; 170 chars; 48 ms; exact three-line file content returned. |
 | Git status and diff | PASS | Local repository initialised; baseline `0a3027a`; status and diff exit 0; final `git diff --check` exit 0. |
-| Harmless command/test | PASS via direct RDC; MCP bridge pending | stdout/stderr separated; shell exit 0; 137 ms. |
+| Harmless command/test | PASS via MCP bridge | `desktop-commander.start_process`; stdout/stderr markers captured; PID 61954. |
 | Safe expected failure | PASS via direct RDC | Python child exit code 7 and both output streams captured. |\n| Duplicate guard | PARTIAL | Fixture ran once; second invocation returned `DUPLICATE_BLOCKED`; extension/proxy transport-level retry deduplication not tested. |
 | Workspace boundary | PASS for filesystem tools | `allowedDirectories` set to session-2; in-scope listing passed; `/home/dzu/Documents` denied. Shell commands are not confined by this allow-list. |
+
+
+### MCP bridge process execution — PASS
+
+**Tool:** `desktop-commander.start_process`  
+**Call ID:** `11`  
+**PID:** `61954`  
+**Working directory:** `/home/dzu/AgChat-Testing/session-2/`
+
+Command (synthetic, no file writes):
+
+```bash
+python3 -c 'import sys; print("STDOUT_MARKER"); print("STDERR_MARKER", file=sys.stderr); sys.exit(7)'
+```
+
+The extension returned both output markers and PID 61954. The process was then inspected through a second MCP call, `desktop-commander.read_process_output` (call ID 13), without rerunning it.
+
+Actual verified result:
+
+```text
+STDOUT: STDOUT_MARKER
+STDERR: STDERR_MARKER
+Exit code: 7
+Runtime: 0.13s
+Process: Completed
+PID: 61954
+```
+
+Result: **PASS** for bridge command execution, stdout/stderr separation, and exact non-zero exit-code read-back. No file was modified by this test.
 
 ## 10. Command, expected failure, duplicate guard, and boundary checks (direct RDC)
 
@@ -227,7 +256,7 @@ Must be within one of these directories: /home/dzu/AgChat-Testing/session-2
 This proves the Desktop Commander filesystem-tool boundary. Important limitation: this allow-list is not an OS sandbox and does not confine arbitrary shell commands launched through `start_process`. Do not treat it as protection against malicious shell commands. The Xubuntu host remains a dedicated development machine; avoid destructive commands and sensitive data.
 
 
-## 10. ChatGPT UI tool-call bridge verification — PASS
+## 11. ChatGPT UI tool-call bridge verification — PASS
 
 After launching Chrome with CDP against a **copy of the user's existing Default profile** (the original profile directory was not used by the CDP test process), the MCP SuperAssistant settings were checked in its own options page:
 
@@ -259,9 +288,9 @@ Git verification fixture change.
 
 The result panel had success status (`exec-success`) and an OK result indicator. This is direct evidence that a tool call originating in the ChatGPT conversation was executed by the local Desktop Commander through SuperAssistant and the SSE proxy. The file was only read; no file mutation occurred during this check.
 
-**Important limitation:** the result was displayed in SuperAssistant's result panel. The conversation's assistant text still said it was waiting for the actual result. Clicking the extension's `Insert` control displayed `Inserted!`, but did not visibly submit a follow-up message to ChatGPT. Therefore the outbound tool-call path and local execution are proven; automatic result injection/continuation back into the model is **not yet proven**. This remains a distinct acceptance item.
+**Result-return mechanism verified:** the extension's `Insert` action queues the result in its internal input-chip mechanism (the ChatGPT adapter calls `tryCapture()` and labels the payload as `tool-result`). The result does not immediately appear in the visible composer. The first `Enter` flushes the queued chip into the composer; the second `Enter` submits it. ChatGPT then receives the `<function_result call_id="9">` payload and continued the same conversation with a substantive `MCP READ PASS` response based on the returned file contents. This proves a complete manually mediated round trip. It does **not** prove fully automatic submission: the Insert + two Enter actions were performed by the test operator through Puppeteer/UI automation.
 
-## 11. Interpretation
+## 12. Interpretation
 
 This session proves that ChatGPT UI-originated Desktop Commander tool calls can be executed by the installed Xubuntu host through MCP SuperAssistant and the local SSE proxy. The direct UI test used `desktop-commander.read_file` and returned the exact file content with a 48 ms reported execution time. Earlier file creation, read-back, and edit/read-back checks through the extension remain valid. Git status/diff were verified locally through direct RDC after the disposable workspace was initialised as a repository.
 
@@ -269,13 +298,13 @@ It does **not** prove the full TEST A acceptance criteria. Automatic result inje
 
 Session 1's direct RDC/Desktop Commander coding-loop results remain separate evidence and must not be conflated with Session 2's browser-extension/proxy bridge results.
 
-## 11. Next actions
+## 13. Next actions
 
 Continue in the existing workspace `/home/dzu/AgChat-Testing/session-2/`:
 
-1. Verify whether SuperAssistant can automatically return the tool result to the model and continue the assistant turn (rather than requiring manual insertion).
-2. Run a harmless command/test through the MCP bridge and capture stdout, stderr, and exit code.
-3. Test one safe expected failure and check that retries do not cause duplicate execution.
+1. Investigate whether the Insert → chip flush → submit sequence can be safely automated without modifying the extension's installed code.
+2. Run a second controlled expected-failure case through the bridge and verify the exact non-zero exit code.
+3. Test transport retry/deduplication with a harmless idempotency fixture; do not assume the fixture guard proves transport-level deduplication.
 4. Assess whether the configured filesystem scope is sufficiently demonstrated.
 
 Do not repeat successful setup or Session 1 tests. Do not label overall TEST A as PASS until the remaining acceptance criteria have evidence.
