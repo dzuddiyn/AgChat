@@ -40,7 +40,8 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 ## Status
 
 - Research and architecture direction: documented from the available project discussions and prior decisions.
-- TEST A: **Session 0 — Xubuntu readiness: PASS; Session 1 — Disposable workspace: PASS.** Xubuntu 26.04.1 LTS is installed on the SSD and the basic toolchain is available. **Session 2 — MCP SuperAssistant extension/proxy and filesystem/Git loop: PASS. Test 43 — full proxy → Orchestrator → Desktop Commander E2E: PASS. Test 45 — filesystem allow-list boundary: PASS. Test 44 — controlled success/failure: PASS; duplicate exit code remains PARTIAL. Basic same-chat sequential continuity: PASS. Overall TEST A remains PARTIAL pending final V1 reliability decision and a practical coding-task demonstration.**
+- TEST A: **PASS for the agreed V1 PoC scope, with documented limitations.** Session 0/1/2 PASS; Test 43 proxy E2E PASS; Test 44 controlled execution PASS (duplicate exit-status telemetry incomplete); Test 45 filesystem allow-list boundary PASS; Test 46 practical coding loop PASS (four unit tests, exit 0, read-back verified). Generic transport exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed.
+
 - ChatCMD / CoS: **deferred pending TEST A evidence**.
 - Permanent Xubuntu installation or SSD formatting: **not authorised by this documentation**; wait for an explicit user decision.
 
