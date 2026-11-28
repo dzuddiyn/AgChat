@@ -253,7 +253,7 @@ A partial pass is useful evidence. Do not label it a full pass.
 | Git status/diff (Session 1) | PASS | Git evidence belongs to Session 1 workspace `/home/xubuntu/AgChat-Testing/test-a01/workspace`. |\n| Git status/diff (Session 2) | PASS | Separate local repository initialised in `/home/dzu/AgChat-Testing/session-2`; baseline `0a3027a`; status/diff exit 0. Repository-local test identity only. |
 | Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
 | Same-chat sequential calls | PASS (baseline) | Test 43 and Test 44 multi-step calls completed in the same originating ChatGPT conversation. Cross-refresh/session recovery is not a V1 acceptance requirement. |
-| Failure/retry/duplicate behaviour | PARTIAL | Test 44 expected failure exit 7 and success exit 0 PASS; duplicate output `DUPLICATE_BLOCKED` and state count 1 confirmed. Original process session expired before exit 17 could be read; no rerun. Generic proxy transport deduplication remains unproven. |
+| Failure/retry/duplicate behaviour | PASS for V1 fixture guard; telemetry PARTIAL | Test 44 expected failure exit 7 and success exit 0 PASS; duplicate output `DUPLICATE_BLOCKED` and state count 1 confirmed. Exit 17 was unavailable after session expiry; no rerun. Generic proxy transport deduplication is not claimed or required. |
 
 **Session 1 historical results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
 
@@ -329,3 +329,18 @@ A single read-only `desktop-commander.list_directory` request for `/home/dzu/Doc
 3. **Same-chat baseline:** PASS for multiple sequential calls in the originating conversation (Tests 43–45). Cross-refresh/session recovery is outside the current V1 gate unless a real need arises.
 
 Overall TEST A remains PARTIAL until the remaining failure-recovery and duplicate/retry acceptance is either evidenced or explicitly scoped as a documented V1 limitation. Do not turn generic exactly-once transport semantics into an unbounded requirement.
+
+
+## 20. Test 46 — practical coding loop
+
+**Result: PASS (28 November 2026).** See [Test 46 detailed report](TEST-46-PRACTICAL-CODING-LOOP-RESULTS.md).
+
+Through the originating ChatGPT conversation and existing SuperAssistant/proxy route:
+- Created `agchat_coding_task_01.py` and `test_agchat_coding_task_01.py`.
+- Ran `python3 -m unittest -v test_agchat_coding_task_01`: all four tests passed.
+- Follow-up `read_process_output` confirmed exit code 0.
+- `read_multiple_files` read back both complete files.
+- Targeted Git status shows only the two Test 46 files as untracked; no staging or commit was performed.
+- SHA-256 hashes are recorded in the detailed report.
+
+**TEST A acceptance decision:** PASS for the agreed V1 PoC scope, with limitations documented in the roadmap. This is not production-grade shell isolation, generic transport exactly-once delivery, or proxy reconnect recovery.
