@@ -980,3 +980,64 @@ Final state was restored to:
 **NOT YET CLAIMED:** This section verifies UI injection and toggle state only. It does not by itself constitute a new end-to-end tool-result Auto Insert → Auto Submit test after the selector patch. That acceptance item remains separate.
 
 **Safety boundary:** The original installed Web Store extension (kngiafgkdnlkgmefdafaibkibegkcaef) was not modified. Proxy configuration was not changed. Auto Execute remained OFF.
+
+## 29. Fresh UI-originated write/read-back and Auto Insert → Auto Submit — PASS
+
+**Date:** 28 November 2026  
+**Target:** Isolated unpacked TEST A extension only (ccmhmhnpkjkdcdggbcafbhkmeekcgeoo). Original Web Store extension remains untouched.
+
+### 29.1 Composer submission obstruction diagnosed
+
+The preserved read-back instruction initially remained unsent in the ChatGPT composer. Browser inspection showed:
+- ChatGPT send button was enabled and exposed as `button[aria-label="Hantar"]`.
+- MCP sidebar was expanded across the right side of the browser viewport.
+- The sidebar's shadow-root panel occupied the same screen region as the ChatGPT send button; its expanded panel width was 320 px.
+- Collapsing the sidebar reduced the panel to a 56 px edge strip. The panel still occupied part of the send-button region in the 800 px browser viewport.
+
+The obstruction was therefore a UI overlap/hit-testing issue involving the MCP sidebar, not a failed MCP transport or invalid read_file request. After collapsing the sidebar and retrying the send action, the instruction was submitted. The ChatGPT conversation then rendered a new `desktop-commander.read_file` function card.
+
+### 29.2 Read-back tool execution — PASS
+
+**Tool:** `desktop-commander.read_file`  
+**Path:** `/home/dzu/AgChat-Testing/session-2/agchat-chatgpt-ui-write.txt`
+
+The MCP function card's Run action was activated once. SuperAssistant displayed a successful result panel:
+- Result size: 88 chars
+- Execution time: 81 ms
+- Result panel exposed Copy, Insert and Attach File controls.
+
+ChatGPT subsequently received the function result and returned the exact file content:
+
+```text
+AGCHAT CHATGPT UI WRITE PASS
+```
+
+ChatGPT's resulting response identified the read-back as PASS and confirmed that the content matched the previously written file. This was a read-only operation. No shell was used for the read-back and no other file was intentionally changed by this operation.
+
+### 29.3 Auto Insert and Auto Submit — PASS (after manual Run)
+
+Observed conversation sequence after the Run action:
+1. SuperAssistant returned the read_file result.
+2. The result was automatically returned to the ChatGPT conversation as a tool-result message; no manual Insert action was clicked.
+3. The composer was empty after result return.
+4. ChatGPT produced a follow-up response grounded in the returned content; no manual Send/Hantar action was used for the result submission.
+
+Therefore, for this fresh read-only call:
+- Auto Insert: **PASS**
+- Auto Submit: **PASS**
+- Auto Execute: **OFF / NOT TESTED** — the tool card's Run action was manually activated once. This test does not claim automatic execution of tool cards.
+
+### 29.4 Updated acceptance status
+
+| Check | Result | Evidence |
+|---|---|---|
+| Composer submission after sidebar obstruction | PASS | Read instruction was submitted and rendered as a new function card after sidebar collapse/retry. |
+| ChatGPT UI-originated read_file | PASS | New read_file card executed through SuperAssistant; result returned in 81 ms. |
+| Exact read-back content | PASS | `AGCHAT CHATGPT UI WRITE PASS` returned and matched the write payload. |
+| Auto Insert after tool execution | PASS | Result returned into the ChatGPT conversation without operator Insert click. |
+| Auto Submit after tool execution | PASS | Composer cleared and ChatGPT produced a subsequent response without operator Send/Hantar click. |
+| Auto Execute | OFF / NOT TESTED | Run action was manually activated once. |
+
+**Interpretation:** The patched TEST A copy now has fresh end-to-end evidence for the full result-return path after a manually initiated read-only MCP tool execution: Run → result → Auto Insert → Auto Submit → ChatGPT follow-up response. This closes the specific Auto Insert/Auto Submit acceptance gap for the patched test copy. It does not prove Auto Execute, transport-level deduplication, or compatibility of the untouched original Web Store extension.
+
+**Safety boundary:** Only the isolated TEST A extension was used. The original Web Store extension, proxy configuration and source repository were not modified by the test. Auto Execute remained OFF.
