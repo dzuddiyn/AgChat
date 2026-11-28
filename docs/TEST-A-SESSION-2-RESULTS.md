@@ -1486,3 +1486,84 @@ This supports an AgChat Execution Ledger design with:
 **Limitations:** This test validates the isolated SQLite fixture, not a production AgChat implementation. It does not yet test worker lease expiry, heartbeat/ownership fencing after a worker stalls, multi-host database access, schema migration, or atomicity between ledger updates and arbitrary external side effects. SQLite is appropriate for this single-host prototype test; production deployment topology must determine whether a different transactional store is required.
 
 No production data or shared service was modified.
+
+
+## 39. Worker lease, heartbeat, takeover, and fencing token — PASS (isolated SQLite fixture)
+
+**Date:** 28 November 2026  
+**Target:** Dedicated SQLite lease/fencing fixture in `/home/dzu/AgChat-Testing/session-2/`.  
+**Safety:** Synthetic operation keys only. No production data, proxy process, Desktop Commander service, extension, or project source file was modified.
+
+### 39.1 Mechanism tested
+
+Created `agchat-worker-lease-fencing-test.py` using SQLite WAL mode and `synchronous=FULL`.
+
+Each operation record stores:
+- state;
+- current worker owner;
+- lease expiry timestamp;
+- monotonically increasing fencing token;
+- last heartbeat timestamp;
+- completion result.
+
+Worker claims and updates use transactional conditional writes. A heartbeat, completion, or takeover is accepted only when the worker identity, fencing token, state, and lease validity match the current record.
+
+### 39.2 Case A — expired lease and worker takeover
+
+Sequence:
+1. Worker A claims the operation with fencing token 1 and a short lease.
+2. The lease expires.
+3. Worker B takes over and receives fencing token 2.
+4. Worker A attempts a late completion using token 1.
+5. The stale completion is rejected with `STALE_FENCING_TOKEN_OR_EXPIRED_LEASE`.
+6. Worker B completes successfully.
+
+Observed final row:
+- State: `SUCCEEDED`
+- Owner: `worker-B`
+- Fencing token: 2
+- Result: `completed-by-B`
+
+**Result: PASS.** A stale worker could not overwrite the new owner's result.
+
+### 39.3 Case B — heartbeat renewal and expiry
+
+Sequence:
+1. Worker C claims the operation with fencing token 1.
+2. Worker C sends a heartbeat before expiry; the lease is renewed.
+3. Worker D attempts takeover while the renewed lease is active; takeover is rejected with `LEASE_ACTIVE`.
+4. After the renewed lease expires, Worker D takes over with fencing token 2.
+5. Worker C attempts a late heartbeat using token 1; it is rejected with `STALE_OR_EXPIRED_LEASE`.
+6. Worker D completes successfully.
+
+Observed final row:
+- State: `SUCCEEDED`
+- Owner: `worker-D`
+- Fencing token: 2
+- Result: `completed-by-D`
+
+**Result: PASS.** Heartbeat protected an active lease, while expiry allowed takeover and fenced out the old worker.
+
+### 39.4 Artifacts and integrity
+
+- Test script: `agchat-worker-lease-fencing-test.py`
+- Script SHA-256: `2023d7ebfe57d3c1645a1b9c07338b9e1241be2f6ccb269e3128ed3dbe0263e7`
+- SQLite database: `agchat-worker-lease-fencing.sqlite`
+- Database SHA-256: `cb440e1ea2862eda50e5ec25d9fcb880e78cf485905a7eaa230e12dddbc31ca6`
+- Result report: `agchat-worker-lease-fencing-result.json`
+- Report SHA-256: `e8db577c7a7778632b3b5da984cb10906d7326a6178e28fc9640d5b9f1bde50f`
+
+### 39.5 Result and limitations
+
+**PASS — lease renewal, lease expiry, takeover, monotonically increasing fencing tokens, and stale-worker rejection behaved as expected in the isolated fixture.**
+
+Design implications for AgChat:
+- Every successful claim increments a fencing token.
+- Heartbeat and completion must include the current worker ID and fencing token.
+- Expired leases may be taken over transactionally.
+- A previous worker's late writes must be rejected even if that worker resumes.
+- External side-effect adapters must enforce fencing where possible; checking only the local ledger cannot prevent a stale process from writing to an external system that ignores fencing tokens.
+
+**Limitations:** This test validates a single-host SQLite fixture with controlled timing. It does not prove distributed clock safety, multi-host database semantics, real process/network partitions, or fencing support in arbitrary external APIs and tools. Production design must use a trusted time source or database time for lease decisions and propagate fencing tokens to side-effect systems that can enforce them.
+
+No production data or shared service was modified.
