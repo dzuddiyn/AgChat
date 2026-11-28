@@ -22,6 +22,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 - [SuperAssistant development method on Xubuntu: RDC, CDP, GUI and MCP setup](docs/AGCHAT-WORKING-METHOD.md)
 - [TEST A execution and acceptance plan](docs/TEST-A-PLAN.md)
 - [TEST 43 — SuperAssistant proxy + Orchestrator E2E result](docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md)
+- [TEST 44 — controlled command, failure and duplicate guard](docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md)
 
 ## Project boundaries
 
