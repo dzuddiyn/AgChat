@@ -1,6 +1,6 @@
 # TEST A — Xubuntu Execution & Acceptance Plan
 
-**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read/edit and Git verification: PASS. Test 43 — full ChatGPT → SuperAssistant → SSE proxy → Orchestrator → Desktop Commander route: PASS. Overall TEST A remains PARTIAL until remaining acceptance checks (workspace boundary, safe failure/retry, transport-level duplicate behaviour and broader same-chat continuity) are closed.  
+**Status:** Session 0 — Xubuntu readiness: PASS. Session 1 — Disposable workspace: PASS. Session 2 — MCP SuperAssistant bridge connection, tool discovery, file create/read/edit and Git verification: PASS. Test 43 — full ChatGPT → SuperAssistant → SSE proxy → Orchestrator → Desktop Commander route: PASS. Overall TEST A remains PARTIAL. Filesystem allow-list boundary (Test 45), basic same-chat sequential continuity, controlled expected failure and successful process execution are now evidenced. Remaining gaps: duplicate process exit-code evidence is unavailable after the process session expired; generic transport-level deduplication is not proven and is not assumed to be a V1 guarantee; proxy disconnect/reconnect recovery remains untested.  
 **Priority:** First implementation gate for AgChat  
 **Baseline:** ChatGPT Go, one original conversation, MCP SuperAssistant, local proxy, Desktop Commander  
 **Target host:** Niniy-PC Mini PC running/testing Xubuntu  
@@ -247,13 +247,13 @@ A partial pass is useful evidence. Do not label it a full pass.
 |---|---|---|
 | RDC connection | PASS | Device `xubuntu` is online. |
 | Desktop Commander MCP connection | PASS | Tool calls succeeded. |
-| Filesystem scope | PASS | `allowedDirectories` points to `/home/xubuntu/AgChat-Testing/test-a01`. |
+| Filesystem scope | PASS | Current Session 2 allow-list is `/home/dzu/AgChat-Testing/session-2`; Test 45 denied out-of-scope `/home/dzu/Documents` via the actual SuperAssistant proxy route. |
 | Workspace layout | PASS | `workspace/`, `evidence/`, `notes/`, `backups/` exist. |
 | Session 1 local file create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back through direct RDC/Desktop Commander. |\n| Session 2 MCP file create/read | PASS | `agchat-write-test.txt` created and read back with exact content through MCP SuperAssistant → proxy → Desktop Commander. |\n| Session 2 MCP file edit | PASS | Two-line rewrite and exact read-back verified through MCP SuperAssistant → proxy → Desktop Commander. |
 | Git status/diff (Session 1) | PASS | Git evidence belongs to Session 1 workspace `/home/xubuntu/AgChat-Testing/test-a01/workspace`. |\n| Git status/diff (Session 2) | PASS | Separate local repository initialised in `/home/dzu/AgChat-Testing/session-2`; baseline `0a3027a`; status/diff exit 0. Repository-local test identity only. |
 | Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
-| Same-chat sequential calls | PASS (basic sequence) | Test 43 reconciliation plus Test 44 expected-failure, success and follow-up process-output calls completed in the same originating ChatGPT conversation. Cross-refresh/session recovery remains untested. |
-| Failure/retry/duplicate behaviour | PARTIAL | Test 44 expected failure exit 7 and success exit 0 PASS; duplicate output `DUPLICATE_BLOCKED` and state count 1 confirmed, but duplicate exit 17 not independently captured. |
+| Same-chat sequential calls | PASS (baseline) | Test 43 and Test 44 multi-step calls completed in the same originating ChatGPT conversation. Cross-refresh/session recovery is not a V1 acceptance requirement. |
+| Failure/retry/duplicate behaviour | PARTIAL | Test 44 expected failure exit 7 and success exit 0 PASS; duplicate output `DUPLICATE_BLOCKED` and state count 1 confirmed. Original process session expired before exit 17 could be read; no rerun. Generic proxy transport deduplication remains unproven. |
 
 **Session 1 historical results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
 
@@ -318,3 +318,20 @@ The initial execution was marked FAILED due to an Orchestrator response-parser m
 - Test 43 setup and fixture were not repeated or modified.
 
 **Current next action:** inspect the existing duplicate process-output result if available, without rerunning the fixture. Then complete any remaining boundary and continuity checks. Overall TEST A remains PARTIAL; do not claim generic transport-level exactly-once semantics from a fixture-level exclusive-create guard.
+
+
+## 18. Test 45 — workspace filesystem boundary
+
+**Result: PASS for Desktop Commander filesystem tools (28 November 2026).** See [Test 45 detailed report](TEST-45-WORKSPACE-BOUNDARY-RESULTS.md).
+
+A single read-only `desktop-commander.list_directory` request for `/home/dzu/Documents` through the originating ChatGPT conversation and SuperAssistant proxy was denied with `Path not allowed`. The error explicitly identified the sole allowed directory: `/home/dzu/AgChat-Testing/session-2`. No out-of-scope data was returned and no side effect occurred.
+
+**Boundary qualification:** This verifies the filesystem allow-list only. It does not confine arbitrary shell/process execution. For this dedicated-PC PoC, host-level non-destructive commands remain acceptable with manual approval and sensible safeguards; container/VM isolation is optional, not a V1 prerequisite.
+
+## 19. Refined remaining acceptance items
+
+1. **Duplicate/retry evidence:** Test 44 duplicate guard is confirmed at fixture level (state remains count 1), but exit 17 could not be recovered because the original Desktop Commander process session no longer exists. Do not rerun the side-effecting fixture. Generic transport-level exactly-once delivery is not claimed.
+2. **Failure recovery:** Proxy disconnect/reconnect and ambiguous timeout recovery remain untested. If tested, inspect the original request/process/side effect before any retry.
+3. **Same-chat baseline:** PASS for multiple sequential calls in the originating conversation (Tests 43–45). Cross-refresh/session recovery is outside the current V1 gate unless a real need arises.
+
+Overall TEST A remains PARTIAL until the remaining failure-recovery and duplicate/retry acceptance is either evidenced or explicitly scoped as a documented V1 limitation. Do not turn generic exactly-once transport semantics into an unbounded requirement.
