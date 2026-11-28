@@ -37,7 +37,9 @@ Detailed procedure: [docs/AGCHAT-WORKING-METHOD.md](docs/AGCHAT-WORKING-METHOD.m
 - **TEST A V1 PoC gate: PASS WITH LIMITATIONS.** Generic transport exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed.
 - Test 43 evidence: [docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md](docs/TEST-43-PROXY-ORCHESTRATOR-RESULTS.md).
 - Test 44 evidence: [docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md](docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md).
-- Overall TEST A remains PARTIAL. Continue with the first outstanding acceptance item in [docs/TEST-A-PLAN.md](docs/TEST-A-PLAN.md), not with browser installation or Test 43 replay.
+- Test 45 evidence: [docs/TEST-45-WORKSPACE-BOUNDARY-RESULTS.md](docs/TEST-45-WORKSPACE-BOUNDARY-RESULTS.md).
+- Test 46 evidence: [docs/TEST-46-PRACTICAL-CODING-LOOP-RESULTS.md](docs/TEST-46-PRACTICAL-CODING-LOOP-RESULTS.md).
+- **Overall TEST A: PASS for the agreed V1 PoC scope, with limitations.** Next work is the next concrete AgChat implementation requirement, not more setup or repeat testing. See [docs/TEST-A-PLAN.md](docs/TEST-A-PLAN.md) and [the roadmap audit](docs/AGCHAT-RESEARCH-AND-PLAN.md).
 - Inspect current process, port, ledger and file state before any side-effecting action. Never rerun a fixture because a response is delayed or ambiguous; inspect its original PID, output, ledger and proof first.
 
 ## 4. Approval and safety
