@@ -138,22 +138,20 @@ Do not place secrets or real user data in this workspace.
 
 ## 8. Phase 4 — Filesystem and Git test
 
-**Partial result — Session 2:** `A-CREATE`, `A-READ`, `A-EDIT`, and edited read-back passed in `/home/dzu/AgChat-Testing/session-2/`. The file was created with `AgChat TEST A Session 2 - WRITE PASS`, read back exactly, overwritten with the two lines `AgChat TEST A Session 2 - EDIT PASS` and `MCP file edit and read-back verification.`, then read back exactly. Git status/diff initially failed because the disposable Session 2 folder had no `.git` directory, although Git 2.53.0 was installed. No `user.name`/`user.email` identity was configured either. Resolved by running `git init -b main` in this disposable workspace and setting repository-local identity (`AgChat Test`, `agchat-test@localhost`) without changing global configuration. Committed the existing test fixture as baseline `0a3027a`, appended a harmless verification line, and reran the checks: `git status --short` exit 0 showed the expected modified fixture plus two untracked test/config files; `git diff -- agchat-write-test.txt` exit 0 showed the exact appended line. Git verification: PASS. Boundary checks remain pending. The new workspace path is `/home/dzu/AgChat-Testing/session-2/`, not the old Live USB workspace.
+**Result: PASS.** Session 2 `A-CREATE`, `A-READ`, `A-EDIT` and exact read-back passed in `/home/dzu/AgChat-Testing/session-2/`. Git verification passed after initialising the disposable workspace repository and setting repository-local identity only. Baseline commit: `0a3027a`; subsequent `git status --short` and `git diff -- agchat-write-test.txt` returned the expected change.
 
-Perform the remaining operations sequentially from the original conversation:
-
-| Test | Action | Expected evidence |
+| Test | Result | Evidence |
 |---|---|---|
-| A-READ | Read the known fixture | Exact expected contents |
-| A-CREATE | Create a new file | File exists in workspace |
-| A-EDIT | Change a known value | Read-back shows changed value — PASS |
-| A-STATUS | Run Git status | PASS after local `git init`; exit 0 and expected modified/untracked files shown. |
-| A-DIFF | Inspect Git diff | PASS; exit 0 and exact fixture change shown. |
-| A-BOUNDARY | Attempt a harmless path check outside workspace | Operation is denied or demonstrably unavailable |
+| A-READ | PASS | Exact expected fixture contents returned. |
+| A-CREATE | PASS | New file created in the disposable workspace. |
+| A-EDIT | PASS | Known lines changed and exact read-back verified. |
+| A-STATUS | PASS | Git status exit 0 with expected modified/untracked files. |
+| A-DIFF | PASS | Git diff exit 0 and exact fixture change shown. |
+| A-BOUNDARY | PASS | Test 45 denied read-only listing of `/home/dzu/Documents` with `Path not allowed` through the actual SuperAssistant proxy route. |
 
-Do not deliberately write outside the workspace to test the boundary. A denied read/list check is sufficient if the tool exposes a safe way to test it.
+Do not deliberately write outside the workspace to test the boundary. Test 45's denied read/list operation is sufficient evidence for Desktop Commander's filesystem allow-list. It does not sandbox arbitrary shell commands.
 
-**Exit condition:** File operations work, changes are verifiable, and workspace scoping is demonstrated.
+**Exit condition: PASS** for filesystem operations, Git verification and filesystem-tool workspace scope.
 
 ## 9. Phase 5 — Practical command/test
 
