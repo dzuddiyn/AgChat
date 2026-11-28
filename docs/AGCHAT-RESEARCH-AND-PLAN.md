@@ -2,9 +2,10 @@
 
 **Document status:** Consolidated project record  
 **Baseline date:** 27 November 2026  
+**Latest roadmap audit:** 28 November 2026  
 **Repository:** https://github.com/dzuddiyn/AgChat  
 **Purpose:** Preserve the research, reasoning, accepted decisions, constraints, and implementation plan discussed for AgChat.  
-**Important:** This document distinguishes decisions from verified test results. TEST A is in progress; connection and basic filesystem operations have passed, while Git verification and end-to-end command workflow remain pending.
+**Current status:** TEST A is PARTIAL. MCP bridge, filesystem create/read/edit, Git verification, Test 43 full proxy/Orchestrator E2E, Test 44 controlled command success/failure, Test 45 filesystem allow-list denial, and basic same-chat sequential continuity have been demonstrated. Remaining limitations are documented in Sections 16–17 and `docs/TEST-A-PLAN.md`.
 
 ---
 
@@ -156,7 +157,7 @@ The deployment options were assessed against actual resource constraints and the
 - A command can affect files or processes outside the intended workspace unless the process itself is constrained.
 - Browser extension, local proxy, and local tool permissions become part of the host's attack surface.
 
-**Assessment:** Suitable for the initial read-only and file-operation proof. Do not enable unrestricted shell execution merely because the setup is host-only and the user can approve calls.
+**Assessment:** Accepted for the current PoC, including ordinary non-destructive host-level development commands with deliberate manual approval. The filesystem allow-list does not sandbox shell execution; commands must be reviewed for scope and impact. A container remains optional, not a formal gate.
 
 ### 6.2 Host + Container
 
@@ -174,7 +175,7 @@ The deployment options were assessed against actual resource constraints and the
 - Browser and desktop interaction generally remain on the host.
 - Resource use and image storage still matter on a constrained machine.
 
-**Assessment:** Preferred next security boundary if TEST A reaches command execution and the host has sufficient resources. Use a non-privileged container, mount only the test workspace, avoid host sockets and broad home-directory mounts, and keep network access disabled or restricted unless the test requires it.
+**Assessment:** Optional stronger boundary if a concrete workload or risk requires it. It is not a V1 prerequisite for this dedicated-PC PoC. If adopted later, use a non-privileged container, mount only the required workspace, avoid host sockets and broad home-directory mounts, and restrict network access unless required.
 
 ### 6.3 Host + VM
 
@@ -208,10 +209,12 @@ Start with the simplest host-side integration and prove the workflow directly on
 ### 7.1 Target flow
 
 `ChatGPT Go`
-→ `MCP SuperAssistant browser extension`
-→ `local MCP proxy`
+→ `Google Chrome (Rdeeen profile) + MCP SuperAssistant`
+→ `local SSE proxy`
 → `Desktop Commander MCP`
 → `disposable local workspace on Xubuntu`
+
+The AgChat Orchestrator was added as a test adapter for Test 43's operation-key/approval/reconciliation fixture. It is not automatically part of the minimal product architecture and must not become a duplicate general-purpose orchestration or approval framework.
 
 Tool results must be returned to the same ChatGPT conversation that initiated the call.
 
@@ -253,9 +256,9 @@ TEST A is a pass only when the following are demonstrated and recorded:
 3. **Create:** ChatGPT creates a new test file in the workspace.
 4. **Edit:** ChatGPT changes a known line/value in that file.
 5. **Git evidence:** Git status and diff show the expected changes and no unrelated changes.
-6. **Controlled execution:** A deliberately harmless command/test runs inside the chosen constrained boundary; stdout, stderr and exit code are captured and returned.
+6. **Controlled execution:** A deliberately harmless, manually approved command/test runs on the dedicated host (accepted PoC mode) or a stronger boundary if one is later justified; stdout, stderr and exit code are captured and returned. Do not claim that `allowedDirectories` confines shell commands.
 7. **Same-chat continuity:** Several sequential calls work in the original conversation without requiring a new conversation or manually copying results.
-8. **No duplicate execution:** One tool request produces one execution; retries/timeouts do not silently repeat a write or command.
+8. **Duplicate/retry safety:** Side effects are idempotent or guarded where practical; after an ambiguous timeout, inspect the original process and resulting state before retrying. Do not claim generic transport-level exactly-once delivery. A repeated request must not silently create an unintended second side effect.
 9. **Failure behaviour:** A missing file, invalid command, timeout, or disconnected proxy returns an intelligible failure rather than a false success.
 10. **Evidence:** Commands, versions, relevant logs, Git diff, and observed results are recorded without secrets.
 
@@ -435,8 +438,7 @@ Choose an existing runtime only if it solves a demonstrated need. Do not combine
 - Require approval for writes and commands.
 - Restrict proxy exposure to localhost unless there is a deliberate, secured reason otherwise.
 - Redact tokens and credentials from evidence.
-- Use a container with minimal mounts/capabilities for command execution.
-- Do not use privileged containers or mount the host home directory.
+- A container is an optional hardening path when a concrete risk or workload justifies it; if used, minimise mounts/capabilities, avoid privileged mode and do not mount the host home directory.
 - Inspect diffs and execution results before accepting a change.
 - Record failures honestly; do not mark a test as passed if only part of the loop worked.
 
@@ -476,7 +478,7 @@ Do not add these to the current build unless a new requirement is approved:
 
 ### Gate 1 — TEST A bridge proof
 **Outcome:** ChatGPT Go can discover and invoke Desktop Commander through MCP SuperAssistant and the local proxy.  
-**Exit condition:** Read, create, edit, controlled execution, Git verification, same-chat continuity, and failure behaviour are evidenced.
+**Exit condition:** Read, create, edit, Git verification, manually approved controlled execution, basic same-chat sequential continuity, filesystem allow-list boundary, and honest expected-failure behaviour are evidenced. Duplicate/retry limitations and proxy reconnect recovery are explicitly documented; generic exactly-once transport semantics are not a V1 requirement.
 
 ### Gate 2 — Runtime comparison
 **Outcome:** Evaluate ChatCMD and CoS only against gaps found in TEST A.  
@@ -498,13 +500,13 @@ Do not add these to the current build unless a new requirement is approved:
 | D-002 | Reuse existing open-source/native capabilities before building new runtime features. | Accepted |
 | D-003 | Preserve one full ChatGPT conversation as the baseline for the initial proof. | Accepted |
 | D-004 | One task at a time for the current MVP. | Accepted |
-| D-005 | TEST A (MCP SuperAssistant + local proxy + Desktop Commander) is the first implementation test. | Accepted; untested |
+| D-005 | TEST A (MCP SuperAssistant + local proxy + Desktop Commander) is the first implementation test. | Accepted; implementation validated PARTIAL by Tests 43–45 |
 | D-006 | ChatCMD and CoS are deferred until TEST A evidence exists. | Accepted |
 | D-007 | Do not build a custom reviewer, moderator, coordinator, worker pool, or orchestration framework. | Accepted |
 | D-008 | Do not duplicate native trace, approval ledger, task timeline, or execution logs. | Accepted |
 | D-009 | OBA is outside AgChat scope. | Accepted |
-| D-010 | Host-only is the simplest starting point for read-only/file proof; command execution requires a real boundary. | Accepted |
-| D-011 | Container is a possible command-execution boundary; VM is not required for V1. | Accepted |
+| D-010 | Host-only execution is accepted for the dedicated-PC PoC when commands are understood, non-destructive and manually approved; filesystem allow-lists do not sandbox shell commands. | Accepted and operationally applied |
+| D-011 | Container is an optional stronger boundary when a concrete risk/workload justifies it; VM is not required for V1. | Accepted |
 | D-012 | Do not attribute i7-4710HQ laptop specifications to Niniy-PC. | Constraint |
 | D-013 | Do not treat Live USB without persistence as a permanent installation. | Constraint |
 | D-014 | Apply practical, risk-proportionate security; do not block the PoC with unnecessary isolation layers. | Accepted standing principle |
@@ -518,8 +520,8 @@ Do not add these to the current build unless a new requirement is approved:
 - Browser/extension compatibility in the actual Xubuntu session.
 - Which MCP SuperAssistant proxy version and transport will be used.
 - Exact Desktop Commander version and tool permissions.
-- Whether a constrained container is available and practical on Niniy-PC.
-- Whether TEST A can preserve same-chat continuity across multiple sequential calls.
+- Whether a container is worth adopting for a later concrete workload; it is not a current blocker.
+- Proxy disconnect/reconnect and ambiguous-timeout recovery behaviour.
 - Whether ChatCMD or CoS can preserve the same identity and security properties if later evaluated.
 
 ## 15. Change-control rule
@@ -531,6 +533,69 @@ When new evidence appears:
 4. Explain what evidence justifies changing an accepted decision.
 5. Keep historical decisions rather than silently rewriting the project history.
 
-**Current TEST A evidence (27 November 2026):** RDC connection is online; Desktop Commander MCP is connected; `allowedDirectories` is set to `/home/xubuntu/AgChat-Testing/test-a01`; workspace folders `workspace/`, `evidence/`, `notes/`, and `backups/` exist; a synthetic `hello-agchat.md` was created, read, appended, and read back successfully. Git 2.53.0 has now been installed successfully in the Live session. The synthetic workspace was initialised as a Git repository, the fixture was staged and reviewed with `git diff --cached`, and baseline commit `e7b3fd2` was created using repository-local test identity (`AgChat PoC <agchat-poc@localhost>`). Final `git status --short` was clean. A harmless shell command and Python command both executed through Desktop Commander and returned exit code 0. Same-chat sequential workflow and failure/retry behaviour remain pending. Installation is temporary to the current non-persistent Live session.
+**Historical baseline (27 November 2026):** The initial Live-session proof used `/home/xubuntu/AgChat-Testing/test-a01`, Git baseline `e7b3fd2`, and a non-persistent Live environment. This is historical evidence, not the current host/workspace. The installed Xubuntu Session 2 on `dzu-miniPC` uses `/home/dzu/AgChat-Testing/session-2`; do not confuse the two workspaces or repeat the Live-session setup.
 
-**Next action:** Run Git status/diff in the existing synthetic workspace, then test a harmless development command through the already-connected Desktop Commander path. Do not reinstall or repeat the successful setup. ChatCMD/CoS remain deferred until the practical PoC has enough evidence.
+## 16. Roadmap audit and current execution status (28 November 2026)
+
+### 16.1 Evidence-based status
+
+| Gate / capability | Status | Evidence and boundary |
+|---|---|---|
+| Gate 0 — installed Xubuntu readiness | PASS | Xubuntu 26.04.1 LTS installed; actual Session 2 host and workspace in use. |
+| Session 1/2 — workspace, MCP handshake, filesystem operations | PASS | Prior session evidence; do not repeat setup. |
+| Git verification | PASS | Existing Session 1 and Session 2 Git status/diff evidence. |
+| Test 43 — full proxy/Orchestrator/Desktop Commander route | PASS | Originating ChatGPT UI invoked reconciliation; existing proof read back and ledger reconciled. Exact tested route only. |
+| Test 44 — controlled process success/failure | PASS | Expected failure exit 7 and success exit 0 returned through SuperAssistant proxy. |
+| Test 44 — duplicate guard | PARTIAL | `DUPLICATE_BLOCKED`; state count remains 1 and SHA-256 unchanged. Exit 17 cannot be recovered because the original process session no longer exists. Fixture was not rerun. |
+| Test 45 — filesystem allow-list boundary | PASS | Out-of-scope `list_directory /home/dzu/Documents` denied through the real proxy route with `Path not allowed`. |
+| Basic same-chat sequential continuity | PASS | Tests 43–45 performed in the originating conversation. Cross-refresh recovery is not required for V1. |
+| Generic transport-level exactly-once | NOT PROVEN | Do not claim or build a general exactly-once layer from the fixture result. |
+| Proxy disconnect/reconnect recovery | NOT TESTED | Remains an optional follow-up if it becomes necessary for normal operation. |
+| Shell/OS isolation | NOT PROVIDED BY ALLOW-LIST | Host-level commands inherit OS-user permissions. PoC accepts reviewed, manually approved, non-destructive commands; stronger isolation is optional. |
+
+### 16.2 Corrected V1 scope
+
+The original roadmap mixed two different meanings of “boundary”: Desktop Commander filesystem allow-listing and OS-level shell containment. Test 45 now verifies the former. It does not provide the latter.
+
+For V1:
+- Keep the disposable workspace and Desktop Commander filesystem allow-list.
+- Keep Auto Execute OFF and require manual Run/approval for tool execution.
+- Permit ordinary, understood, non-destructive host-level development commands on this dedicated PC.
+- Review command scope and inspect results; never treat approval or filesystem allow-listing as an OS sandbox.
+- Do not install Docker/Podman or create a VM merely to close a formal checklist.
+- Consider a non-privileged container only if a real workload or observed risk warrants it.
+
+### 16.3 Duplicate and retry policy
+
+Generic exactly-once execution across a browser, proxy, MCP server and OS process is not established by these tests and should not become an unbounded V1 requirement.
+
+The practical V1 rule is:
+1. Prefer read-only and naturally idempotent operations.
+2. Guard non-idempotent fixture writes at the side-effect boundary where practical.
+3. If a call times out or its response is ambiguous, inspect the original request/process and read back state before retrying.
+4. Never blindly replay a command that may already have changed state.
+5. Record uncertain outcomes as UNKNOWN until reconciled.
+
+Test 44's duplicate exit code 17 is unavailable because Desktop Commander reports that the original PID session no longer exists. The fixture was intentionally not repeated. Its duplicate guard remains PARTIAL, not PASS.
+
+### 16.4 Remaining roadmap
+
+| Order | Work item | Priority | Exit condition |
+|---|---|---|---|
+| 1 | Close Test 44 duplicate evidence administratively | Low | Retain PARTIAL; no rerun. The missing exit code is a historical evidence gap. |
+| 2 | Proxy disconnect/reconnect and ambiguous-timeout recovery | Medium / conditional | Demonstrate reconnect and prove recovery inspects the original side effect before retry. Do only if needed for normal reliability. |
+| 3 | Consolidate TEST A acceptance and publish a V1 decision | High | All required V1 capabilities are evidenced; explicitly list any accepted limitations. |
+| 4 | Decide whether the current SuperAssistant + Desktop Commander workflow is already sufficient for practical coding | High | Real coding task can be completed, inspected and verified through the same chat. |
+| 5 | Only if a demonstrated gap remains, compare ChatCMD and CoS | Deferred | Candidate solves a concrete gap without duplicating orchestration or losing chat identity. |
+| 6 | Stabilise and document normal operation | Later | Reproducible startup, recovery, workspace policy and known limitations. |
+
+### 16.5 Roadmap decisions from this audit
+
+- **Do not repeat** Test 43, Test 44 setup, browser-profile setup, or earlier passing file/Git tests.
+- **Do not reopen** host-only vs container vs VM for V1 absent new risk evidence.
+- **Do not start** ChatCMD, CoS, OBA, multi-agent or worker-pool integration now.
+- The AgChat Orchestrator remains a test adapter for the Test 43 operation-key/approval/reconciliation fixture, not a commitment to build a general-purpose orchestrator.
+- Browser policy is Google Chrome with the Rdeeen profile only; Vivaldi and Firefox are excluded from this workflow.
+- Auto Execute remains OFF.
+
+**Next practical milestone:** complete one small real coding task end-to-end in the existing workspace using the current chat + SuperAssistant + Desktop Commander workflow, then decide whether any additional runtime is actually needed.
