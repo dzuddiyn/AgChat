@@ -777,3 +777,49 @@ The original TEST A `content/index.iife.js` remains unchanged. The original inst
 ### 25.4 Next action
 
 Load the candidate as a separate isolated unpacked test extension (do not overwrite the currently loaded TEST A extension), verify the two controls change only their own preference keys, then run one controlled Auto Insert → Auto Submit test in ChatGPT. Preserve the existing extension and proxy until the candidate passes.
+
+
+## 26. Toggle fix loaded into isolated TEST A extension — runtime toggle verification pending
+
+**Date:** 28 November 2026
+
+### 26.1 Loading method
+
+The attempt to load a third unpacked extension through the Chrome file chooser did not complete: Puppeteer's file chooser interception timed out. No third extension was installed.
+
+To continue without touching the original Web Store extension, the existing isolated unpacked TEST A extension (ID `ccmhmhnpkjkdcdggbcafbhkmeekcgeoo`) was used as the test target:
+
+- Original TEST A bundle backed up to `content/index.iife.js.pre-toggle-fix`.
+- Candidate patched bundle copied into `content/index.iife.js`.
+- Only TEST A extension was reloaded through `chrome://extensions`.
+- Original installed MCP SuperAssistant extension (ID `kngiafgkdnlkgmefdafaibkibegkcaef`) was not modified.
+- Chrome was not restarted; proxy was not restarted.
+
+### 26.2 Integrity and runtime checks
+
+| Check | Result |
+|---|---|
+| Backup original TEST A bundle | PASS |
+| Candidate bundle copied into isolated TEST A folder | PASS |
+| Candidate `node --check` | PASS |
+| Patched bundle SHA-256 | `87a3f4e5e5c529b405e60296cf758cc6ae463989c50f37a391869fc046858296` |
+| Backup/original bundle SHA-256 | `088e1c576494a2cde6a56985209f04e51ff7528a45334d7e5cc58dbe5282119c` |
+| TEST A extension reload | PASS |
+| New content-script isolated context detected | PASS |
+| Runtime `__mcpAutomationState` | `autoInsert=true, autoSubmit=true, autoExecute=false` |
+| ChatGPT adapter loaded | PASS |
+| `button[aria-label="Hantar"]` selector present | PASS |
+| Independent toggle UI test | NOT YET VERIFIED |
+| End-to-end Auto Insert → Auto Submit | NOT YET VERIFIED |
+
+### 26.3 Popover injection limitation
+
+The adapter's `injectMCPPopoverManually()` method was invoked in the isolated context and returned without throwing, but no `#mcp-popover-container` was present afterward. Therefore the actual toggle controls were not available for independent UI interaction in this state. This is not evidence that the preference fix failed; the control UI did not materialize.
+
+### 26.4 Current state / recovery
+
+The isolated TEST A extension is currently running the patched bundle. The original TEST A bundle is preserved at `content/index.iife.js.pre-toggle-fix` and can be restored by copying it back to `content/index.iife.js` and reloading only this extension. The original Web Store extension and proxy remain untouched.
+
+### 26.5 Next diagnostic
+
+Inspect the popover injection prerequisites and extension action/popup entry point. Determine why manual injection returns without creating the container. Once the toggle controls can be rendered, verify that changing Auto Insert changes only `preferences.autoInsert`, changing Auto Submit changes only `preferences.autoSubmit`, and then run a controlled end-to-end Auto Insert → Auto Submit test.
