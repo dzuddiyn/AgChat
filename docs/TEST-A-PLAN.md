@@ -295,17 +295,11 @@ The initial execution was marked FAILED due to an Orchestrator response-parser m
 
 **Verified checkpoint:** Test 43 is PASS. The SSE proxy is listening on port 3006; the Orchestrator ledger is SUCCEEDED; the proof hash is recorded in [Test 43 results](TEST-43-PROXY-ORCHESTRATOR-RESULTS.md). Do not repeat its setup, fixture, approval or reconciliation.
 
-**Next test (Test 44 — controlled execution and failure/retry through MCP):**
-1. Use the existing Rdeeen Chrome session, extension, proxy and Xubuntu workspace.
-2. Create a separate harmless fixture under `/home/dzu/AgChat-Testing/session-2/`; do not modify the Test 43 fixture or proof.
-3. Through the originating ChatGPT conversation and SuperAssistant proxy, run a controlled expected-failure command and capture stdout, stderr and exit code.
-4. Through the same route, run an atomic one-time success fixture; capture stdout, stderr and exit code.
-5. Submit the same fixture a second time through the same route; verify it is rejected without a second side effect.
-6. Read back the fixture ledger and compare its execution count with the expected value of exactly one.
-7. Keep Auto Execute OFF and manually run each tool card. Do not infer a pass from a process-start response alone; inspect the process result and read back the fixture state.
+**Checkpoint status:** Tests 43–45 have now covered the proxy route, controlled success/failure, same-chat sequential calls and filesystem allow-list denial. Test 44 duplicate process exit 17 remains PARTIAL because the original process session expired; do not rerun the fixture.
 
-**Acceptance boundary:** Test 44 can close the controlled execution, honest failure and fixture-level duplicate/retry checks. It does not by itself prove generic transport-level exactly-once semantics. Overall TEST A remains PARTIAL until same-chat continuity and the required boundary checks are evidenced.
+**Next practical test:** complete one small, non-destructive coding task in the existing `/home/dzu/AgChat-Testing/session-2/` workspace through the current Rdeeen Chrome → SuperAssistant → proxy → Desktop Commander route. Inspect the resulting file and Git diff before accepting it. Do not repeat setup or passing tests.
 
+**Acceptance boundary:** generic transport-level exactly-once delivery and cross-refresh recovery are not V1 requirements. Use idempotent actions where practical and inspect the original process/state before retrying an ambiguous operation. Keep overall TEST A PARTIAL until the practical coding loop is demonstrated.
 
 ## 17. Test 44 — controlled command execution, failure and duplicate guard
 
