@@ -16,6 +16,8 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 
 ## Start here
 
+- [Agent instructions (AGENTS.md)](AGENTS.md)
+
 - [Detailed research, architecture decisions and roadmap](docs/AGCHAT-RESEARCH-AND-PLAN.md)
 - [SuperAssistant development method on Xubuntu: RDC, CDP, GUI and MCP setup](docs/AGCHAT-WORKING-METHOD.md)
 - [TEST A execution and acceptance plan](docs/TEST-A-PLAN.md)
