@@ -25,6 +25,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 - [TEST 44 — controlled command, failure and duplicate guard](docs/TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md)
 - [TEST 45 — workspace filesystem boundary](docs/TEST-45-WORKSPACE-BOUNDARY-RESULTS.md)
 - [TEST 46 — practical coding loop](docs/TEST-46-PRACTICAL-CODING-LOOP-RESULTS.md)
+- [TEST 47 — ChatGPT long-paste threshold](docs/TEST-47-LONG-PASTE-THRESHOLD.md)
 
 ## Project boundaries
 
@@ -40,7 +41,7 @@ The objective is to prove that the original ChatGPT conversation can repeatedly 
 ## Status
 
 - Research and architecture direction: documented from the available project discussions and prior decisions.
-- TEST A: **PASS for the agreed V1 PoC scope, with documented limitations.** Session 0/1/2 PASS; Test 43 proxy E2E PASS; Test 44 controlled execution PASS (duplicate exit-status telemetry incomplete); Test 45 filesystem allow-list boundary PASS; Test 46 practical coding loop PASS (four unit tests, exit 0, read-back verified). Generic transport exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed.
+- TEST A: **PASS for the agreed V1 PoC scope, with documented limitations.** Session 0/1/2 PASS; Test 43 proxy E2E PASS; Test 44 controlled execution PASS (duplicate exit-status telemetry incomplete); Test 45 filesystem allow-list boundary PASS; Test 46 practical coding loop PASS (four unit tests, exit 0, read-back verified). Generic transport exactly-once, proxy reconnect recovery and OS-level shell isolation are not claimed. Test 47 also identified a ChatGPT composer clipboard-paste threshold: 9,999 characters remains inline, while 10,000 becomes a text attachment; use an 8,000-character conservative paste ceiling.
 
 - ChatCMD / CoS: **deferred unless the current validated workflow exposes a concrete gap**.
 - Permanent Xubuntu installation or SSD formatting: **not authorised by this documentation**; wait for an explicit user decision.
