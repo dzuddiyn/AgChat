@@ -252,8 +252,8 @@ A partial pass is useful evidence. Do not label it a full pass.
 | Session 1 local file create/read/edit | PASS | `hello-agchat.md` created, read, appended and read back through direct RDC/Desktop Commander. |\n| Session 2 MCP file create/read | PASS | `agchat-write-test.txt` created and read back with exact content through MCP SuperAssistant → proxy → Desktop Commander. |\n| Session 2 MCP file edit | PASS | Two-line rewrite and exact read-back verified through MCP SuperAssistant → proxy → Desktop Commander. |
 | Git status/diff (Session 1) | PASS | Git evidence belongs to Session 1 workspace `/home/xubuntu/AgChat-Testing/test-a01/workspace`. |\n| Git status/diff (Session 2) | PASS | Separate local repository initialised in `/home/dzu/AgChat-Testing/session-2`; baseline `0a3027a`; status/diff exit 0. Repository-local test identity only. |
 | Harmless command execution | PASS | `printf` and Python smoke test both executed via Desktop Commander; exit code 0. |
-| Same-chat sequential calls | PARTIAL | Tool schema, write, and read calls succeeded sequentially in the same Tool Instructions conversation. Broader multi-step continuity and retry handling remain untested. |
-| Failure/retry/duplicate behaviour | PENDING | Test a safe failure and verify no duplicate write. |
+| Same-chat sequential calls | PASS (basic sequence) | Test 43 reconciliation plus Test 44 expected-failure, success and follow-up process-output calls completed in the same originating ChatGPT conversation. Cross-refresh/session recovery remains untested. |
+| Failure/retry/duplicate behaviour | PARTIAL | Test 44 expected failure exit 7 and success exit 0 PASS; duplicate output `DUPLICATE_BLOCKED` and state count 1 confirmed, but duplicate exit 17 not independently captured. |
 
 **Session 1 historical results:** Git 2.53.0 installed successfully through RDC. Git was initialised only inside `/home/xubuntu/AgChat-Testing/test-a01/workspace`; `hello-agchat.md` was staged and its cached diff inspected. Baseline commit: `e7b3fd2 test: add synthetic AgChat fixture`. A repository-local test identity was used, without changing global Git identity. Final `git status --short` was clean. A harmless shell `printf` and Python smoke test both returned exit code 0 through Desktop Commander.
 
@@ -305,3 +305,16 @@ The initial execution was marked FAILED due to an Orchestrator response-parser m
 7. Keep Auto Execute OFF and manually run each tool card. Do not infer a pass from a process-start response alone; inspect the process result and read back the fixture state.
 
 **Acceptance boundary:** Test 44 can close the controlled execution, honest failure and fixture-level duplicate/retry checks. It does not by itself prove generic transport-level exactly-once semantics. Overall TEST A remains PARTIAL until same-chat continuity and the required boundary checks are evidenced.
+
+
+## 17. Test 44 — controlled command execution, failure and duplicate guard
+
+**Result: PARTIAL (28 November 2026).** See [Test 44 detailed report](TEST-44-COMMAND-FAILURE-DUPLICATE-RESULTS.md).
+
+- Expected failure through SuperAssistant proxy: stdout/stderr markers and exit code 7 verified using follow-up `read_process_output` (PASS).
+- Success through SuperAssistant proxy: `CREATED`, 67-byte state file, stderr marker and exit code 0 verified (PASS).
+- Duplicate attempt through SuperAssistant proxy: `DUPLICATE_BLOCKED` and no-second-side-effect message received; independent read-back confirms `execution_count=1` and unchanged SHA-256. Exit code 17 not independently captured (PARTIAL).
+- All tool cards were run manually; Auto Execute remained OFF.
+- Test 43 setup and fixture were not repeated or modified.
+
+**Current next action:** inspect the existing duplicate process-output result if available, without rerunning the fixture. Then complete any remaining boundary and continuity checks. Overall TEST A remains PARTIAL; do not claim generic transport-level exactly-once semantics from a fixture-level exclusive-create guard.
